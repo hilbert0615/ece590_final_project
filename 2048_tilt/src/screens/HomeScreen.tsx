@@ -9,12 +9,16 @@ import { MenuButton } from '../components/MenuButton';
  * HomeScreen - 游戏主界面
  * 包含标题、菜单按钮和顶部图标
  */
-export const HomeScreen: React.FC = () => {
+interface HomeScreenProps {
+  onNavigateToGame: () => void;  // 导航到游戏界面的回调
+}
+
+export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToGame }) => {
 
   // 按钮点击处理函数
   const handleNewGame = () => {
     console.log('New Game 按钮被点击');
-    // TODO: 后续实现跳转到游戏界面
+    onNavigateToGame();  // 跳转到游戏界面
   };
 
   const handleResume = () => {
