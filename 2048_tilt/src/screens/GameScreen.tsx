@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,8 @@ import {
   TouchableOpacity,
   Alert,
   GestureResponderEvent,
+  Animated,
+  Easing,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -44,6 +46,13 @@ export const GameScreen: React.FC<GameScreenProps> = ({ onBack }) => {
   // 手势识别相关状态
   const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(null);
 
+  // 动画相关
+  const gridShakeAnim = useRef(new Animated.Value(0)).current;
+  const scorePopAnim = useRef(new Animated.Value(1)).current;
+
+  // 防抖：防止连续滑动
+  const [isMoving, setIsMoving] = useState<boolean>(false);
+
   /**
    * 开始新游戏
    */
@@ -69,9 +78,58 @@ export const GameScreen: React.FC<GameScreenProps> = ({ onBack }) => {
   };
 
   /**
+   * 播放无法移动的抖动动画
+   */
+  const playShakeAnimation = () => {
+    Animated.sequence([
+      Animated.timing(gridShakeAnim, {
+        toValue: 10,
+        duration: 50,
+        useNativeDriver: true,
+      }),
+      Animated.timing(gridShakeAnim, {
+        toValue: -10,
+        duration: 50,
+        useNativeDriver: true,
+      }),
+      Animated.timing(gridShakeAnim, {
+        toValue: 10,
+        duration: 50,
+        useNativeDriver: true,
+      }),
+      Animated.timing(gridShakeAnim, {
+        toValue: 0,
+        duration: 50,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
+
+  /**
+   * 播放分数增加动画
+   */
+  const playScoreAnimation = () => {
+    Animated.sequence([
+      Animated.timing(scorePopAnim, {
+        toValue: 1.2,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+      Animated.timing(scorePopAnim, {
+        toValue: 1,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
+
+  /**
    * 处理移动操作
    */
   const handleMove = (direction: Direction) => {
+    // 如果正在移动中，忽略新的滑动
+    if (isMoving) return;
+
     // 保存当前状态（用于撤销）
     setHistory({
       grid: cloneGrid(grid),
@@ -83,46 +141,62 @@ export const GameScreen: React.FC<GameScreenProps> = ({ onBack }) => {
 
     if (!moved) {
       console.log('无法移动到该方向');
+      playShakeAnimation();  // 播放抖动动画
       return;  // 如果没有移动，不做任何操作
     }
 
-    // 添加新的随机方块
-    const gridWithNewTile = addRandomTile(newGrid);
+    // 设置移动状态，防止连续滑动
+    setIsMoving(true);
 
-    // 更新状态
-    setGrid(gridWithNewTile);
-    setScore(score + scoreGained);
+    // 延迟添加新方块，让移动动画先完成
+    setTimeout(() => {
+      // 添加新的随机方块
+      const gridWithNewTile = addRandomTile(newGrid);
 
-    // 更新最高分
-    if (score + scoreGained > bestScore) {
-      setBestScore(score + scoreGained);
-    }
+      // 更新状态
+      setGrid(gridWithNewTile);
+      const newScore = score + scoreGained;
+      setScore(newScore);
 
-    // 检查是否获胜
-    if (!hasWonGame && hasWon(gridWithNewTile)) {
-      setHasWonGame(true);
-      setTimeout(() => {
-        Alert.alert(
-          '恭喜！',
-          '你达到了 2048！',
-          [{ text: '继续游戏', style: 'cancel' }]
-        );
-      }, 300);
-    }
+      // 播放分数动画
+      if (scoreGained > 0) {
+        playScoreAnimation();
+      }
 
-    // 检查游戏是否结束
-    if (isGameOver(gridWithNewTile)) {
-      setTimeout(() => {
-        Alert.alert(
-          '游戏结束',
-          `最终分数: ${score + scoreGained}`,
-          [
-            { text: '返回主菜单', onPress: onBack },
-            { text: '开始新游戏', onPress: startNewGame },
-          ]
-        );
-      }, 300);
-    }
+      // 更新最高分
+      if (newScore > bestScore) {
+        setBestScore(newScore);
+      }
+
+      // 重置移动状态
+      setIsMoving(false);
+
+      // 检查是否获胜
+      if (!hasWonGame && hasWon(gridWithNewTile)) {
+        setHasWonGame(true);
+        setTimeout(() => {
+          Alert.alert(
+            '恭喜！',
+            '你达到了 2048！',
+            [{ text: '继续游戏', style: 'cancel' }]
+          );
+        }, 300);
+      }
+
+      // 检查游戏是否结束
+      if (isGameOver(gridWithNewTile)) {
+        setTimeout(() => {
+          Alert.alert(
+            '游戏结束',
+            `最终分数: ${newScore}`,
+            [
+              { text: '返回主菜单', onPress: onBack },
+              { text: '开始新游戏', onPress: startNewGame },
+            ]
+          );
+        }, 300);
+      }
+    }, 150);  // 延迟 150ms
   };
 
   /**
@@ -139,13 +213,13 @@ export const GameScreen: React.FC<GameScreenProps> = ({ onBack }) => {
    * 手势识别 - 触摸结束（判断滑动方向）
    */
   const onTouchEnd = (event: GestureResponderEvent) => {
-    if (isGyroMode || !touchStart) return;
+    if (isGyroMode || !touchStart || isMoving) return;
 
     const { locationX, locationY } = event.nativeEvent;
     const diffX = locationX - touchStart.x;
     const diffY = locationY - touchStart.y;
 
-    const SWIPE_THRESHOLD = 30;  // 滑动阈值
+    const SWIPE_THRESHOLD = 20;  // 滑动阈值
 
     // 判断滑动方向（横向或纵向）
     if (Math.abs(diffX) > Math.abs(diffY)) {
@@ -187,12 +261,17 @@ export const GameScreen: React.FC<GameScreenProps> = ({ onBack }) => {
         <View style={styles.backButton} />
       </View>
 
-      {/* 分数显示区域 */}
+      {/* 分数显示区域 - 添加动画效果 */}
       <View style={styles.scoreContainer}>
-        <View style={styles.scoreBox}>
+        <Animated.View
+          style={[
+            styles.scoreBox,
+            { transform: [{ scale: scorePopAnim }] }
+          ]}
+        >
           <Text style={styles.scoreLabel}>SCORE</Text>
           <Text style={styles.scoreValue}>{score}</Text>
-        </View>
+        </Animated.View>
         <View style={styles.scoreBox}>
           <Text style={styles.scoreLabel}>BEST</Text>
           <Text style={styles.scoreValue}>{bestScore}</Text>
@@ -201,22 +280,33 @@ export const GameScreen: React.FC<GameScreenProps> = ({ onBack }) => {
 
       {/* 按钮区域 */}
       <View style={styles.buttonContainer}>
-        <TouchableOpacity style={styles.gameButton} onPress={startNewGame}>
+        <TouchableOpacity
+          style={styles.gameButton}
+          onPress={startNewGame}
+          disabled={isMoving}
+        >
           <Text style={styles.buttonText}>New Game</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.gameButton} onPress={undo}>
+        <TouchableOpacity
+          style={styles.gameButton}
+          onPress={undo}
+          disabled={isMoving}
+        >
           <Text style={styles.buttonText}>Undo</Text>
         </TouchableOpacity>
       </View>
 
-      {/* 游戏网格 - 添加手势识别 */}
-      <View
-        style={styles.gridWrapper}
+      {/* 游戏网格 - 添加手势识别和抖动动画 */}
+      <Animated.View
+        style={[
+          styles.gridWrapper,
+          { transform: [{ translateX: gridShakeAnim }] }
+        ]}
         onTouchStart={onTouchStart}
         onTouchEnd={onTouchEnd}
       >
         <GameGrid grid={grid} />
-      </View>
+      </Animated.View>
 
       {/* 陀螺仪开关（暂时禁用） */}
       <View style={styles.gyroContainer}>

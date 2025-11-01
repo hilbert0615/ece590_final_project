@@ -1,23 +1,79 @@
-import React from 'react';
-import { View, Text, StyleSheet, Dimensions } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { Animated, Text, StyleSheet } from 'react-native';
 import { getTileStyle } from '../constants/tileColors';
 
 /**
- * Tile 组件 - 单个方块
+ * Tile 组件 - 单个方块（带动画效果）
  * @param value - 方块的数值（0 表示空方块）
+ * @param isNew - 是否是新生成的方块（用于播放出现动画）
  */
 interface TileProps {
   value: number;
+  isNew?: boolean;
 }
 
-export const Tile: React.FC<TileProps> = ({ value }) => {
+export const Tile: React.FC<TileProps> = ({ value, isNew = false }) => {
   const tileStyle = getTileStyle(value);
 
+  // 动画值：缩放效果
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+  // 动画值：透明度效果
+  const opacityAnim = useRef(new Animated.Value(1)).current;
+
+  // 当方块是新生成的时候，播放出现动画
+  useEffect(() => {
+    if (isNew && value !== 0) {
+      // 初始状态：缩小并透明
+      scaleAnim.setValue(0);
+      opacityAnim.setValue(0);
+
+      // 动画：放大并显示
+      Animated.parallel([
+        Animated.spring(scaleAnim, {
+          toValue: 1,
+          friction: 8,
+          tension: 40,
+          useNativeDriver: true,
+        }),
+        Animated.timing(opacityAnim, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [value, isNew]);
+
+  // 当方块值改变时（合并），播放弹跳动画
+  const prevValue = useRef(value);
+  useEffect(() => {
+    if (prevValue.current !== 0 && value !== prevValue.current && value !== 0) {
+      // 播放弹跳动画
+      Animated.sequence([
+        Animated.timing(scaleAnim, {
+          toValue: 1.1,
+          duration: 100,
+          useNativeDriver: true,
+        }),
+        Animated.timing(scaleAnim, {
+          toValue: 1,
+          duration: 100,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+    prevValue.current = value;
+  }, [value]);
+
   return (
-    <View
+    <Animated.View
       style={[
         styles.tile,
-        { backgroundColor: tileStyle.backgroundColor }
+        {
+          backgroundColor: tileStyle.backgroundColor,
+          transform: [{ scale: scaleAnim }],
+          opacity: opacityAnim,
+        }
       ]}
     >
       {value !== 0 && (
@@ -33,7 +89,7 @@ export const Tile: React.FC<TileProps> = ({ value }) => {
           {value}
         </Text>
       )}
-    </View>
+    </Animated.View>
   );
 };
 
