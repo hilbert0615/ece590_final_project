@@ -22,6 +22,15 @@ import {
   hasWon,
   cloneGrid,
 } from '../utils/gameLogic';
+import {
+  saveGameState,
+  clearGameState,
+  getCurrentUser,
+  SavedGameState,
+  saveBestScore,
+} from '../utils/storageUtils';
+import { getCurrentUser as getSupabaseUser } from '../services/authService';
+import { uploadScore, updateBestScore } from '../services/scoreService';
 
 /**
  * GameScreen - 游戏主界面
@@ -30,15 +39,21 @@ import {
 
 interface GameScreenProps {
   onBack: () => void;  // 返回主菜单的回调
+  initialGameState?: SavedGameState | null;  // 可选：加载已保存的游戏状态
 }
 
-export const GameScreen: React.FC<GameScreenProps> = ({ onBack }) => {
-  // 游戏状态
-  const [grid, setGrid] = useState<Grid>(initializeGrid());
-  const [score, setScore] = useState<number>(0);
-  const [bestScore, setBestScore] = useState<number>(0);
+export const GameScreen: React.FC<GameScreenProps> = ({ onBack, initialGameState }) => {
+  // 游戏状态（如果有初始状态则使用，否则新建游戏）
+  const [grid, setGrid] = useState<Grid>(
+    initialGameState?.grid || initializeGrid()
+  );
+  const [score, setScore] = useState<number>(initialGameState?.score || 0);
+  const [bestScore, setBestScore] = useState<number>(initialGameState?.bestScore || 0);
   const [history, setHistory] = useState<GameHistory | null>(null);
   const [hasWonGame, setHasWonGame] = useState<boolean>(false);
+
+  // 当前用户名（用于保存游戏状态）
+  const [currentUsername, setCurrentUsername] = useState<string>('guest');
 
   // 陀螺仪模式状态（暂时不实现，预留架构）
   const [isGyroMode, setIsGyroMode] = useState<boolean>(false);
@@ -47,20 +62,47 @@ export const GameScreen: React.FC<GameScreenProps> = ({ onBack }) => {
   const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(null);
 
   // 动画相关
-  const gridShakeAnim = useRef(new Animated.Value(0)).current;
   const scorePopAnim = useRef(new Animated.Value(1)).current;
 
   // 防抖：防止连续滑动
   const [isMoving, setIsMoving] = useState<boolean>(false);
 
+  // 初始化：获取当前用户名
+  useEffect(() => {
+    const initUser = async () => {
+      const username = await getCurrentUser();
+      setCurrentUsername(username || 'guest');
+    };
+    initUser();
+  }, []);
+
+  // 自动保存游戏状态（每次 grid 或 score 变化时）
+  useEffect(() => {
+    const autoSave = async () => {
+      if (currentUsername) {
+        await saveGameState(currentUsername, {
+          grid,
+          score,
+          bestScore,
+          timestamp: new Date().toISOString(),
+        });
+      }
+    };
+    autoSave();
+  }, [grid, score, bestScore, currentUsername]);
+
   /**
    * 开始新游戏
    */
-  const startNewGame = () => {
+  const startNewGame = async () => {
     setGrid(initializeGrid());
     setScore(0);
     setHistory(null);
     setHasWonGame(false);
+    // 清空旧的游戏状态
+    if (currentUsername) {
+      await clearGameState(currentUsername);
+    }
   };
 
   /**
@@ -71,39 +113,12 @@ export const GameScreen: React.FC<GameScreenProps> = ({ onBack }) => {
       setGrid(history.grid);
       setScore(history.score);
       setHistory(null);  // 只能撤销一次
-      console.log('已撤销上一步操作');
+      console.log('Undo done');
     } else {
-      Alert.alert('无法撤销', '没有可撤销的操作');
+      Alert.alert('Undo Failed', 'You can only undo one time');
     }
   };
 
-  /**
-   * 播放无法移动的抖动动画
-   */
-  const playShakeAnimation = () => {
-    Animated.sequence([
-      Animated.timing(gridShakeAnim, {
-        toValue: 10,
-        duration: 50,
-        useNativeDriver: true,
-      }),
-      Animated.timing(gridShakeAnim, {
-        toValue: -10,
-        duration: 50,
-        useNativeDriver: true,
-      }),
-      Animated.timing(gridShakeAnim, {
-        toValue: 10,
-        duration: 50,
-        useNativeDriver: true,
-      }),
-      Animated.timing(gridShakeAnim, {
-        toValue: 0,
-        duration: 50,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  };
 
   /**
    * 播放分数增加动画
@@ -141,7 +156,6 @@ export const GameScreen: React.FC<GameScreenProps> = ({ onBack }) => {
 
     if (!moved) {
       console.log('无法移动到该方向');
-      playShakeAnimation();  // 播放抖动动画
       return;  // 如果没有移动，不做任何操作
     }
 
@@ -176,27 +190,61 @@ export const GameScreen: React.FC<GameScreenProps> = ({ onBack }) => {
         setHasWonGame(true);
         setTimeout(() => {
           Alert.alert(
-            '恭喜！',
-            '你达到了 2048！',
-            [{ text: '继续游戏', style: 'cancel' }]
+            'Congratulation!',
+            'You achnieve 2048!',
+            [{ text: 'Continue game', style: 'cancel' }]
           );
         }, 300);
       }
 
       // 检查游戏是否结束
       if (isGameOver(gridWithNewTile)) {
-        setTimeout(() => {
+        // 游戏结束时的处理
+        const handleGameOver = async () => {
+          // 保存最高分（本地）
+          if (newScore > bestScore) {
+            await saveBestScore(currentUsername, newScore);
+          }
+
+          // 清空游戏状态（游戏已结束）
+          await clearGameState(currentUsername);
+
+          // 上传分数到 Supabase（如果已登录）
+          const supabaseUser = await getSupabaseUser();
+          if (supabaseUser) {
+            // 更新 Supabase 中的最高分
+            await updateBestScore(supabaseUser.id, newScore);
+
+            // 上传本次游戏分数
+            // TODO: 后续添加 GPS 位置信息
+            const { score: uploadedScore, error } = await uploadScore(
+              supabaseUser.id,
+              supabaseUser.username,
+              newScore
+              // location: { latitude, longitude, city, country }  // 后续添加
+            );
+
+            if (error) {
+              console.error('Upload your score failed:', error);
+            } else {
+              console.log('Upload your score successful:', uploadedScore);
+            }
+          }
+
+          // 显示游戏结束对话框
           Alert.alert(
-            '游戏结束',
-            `最终分数: ${newScore}`,
+            'Game Over',
+            `Final score: ${newScore}`,
             [
-              { text: '返回主菜单', onPress: onBack },
-              { text: '开始新游戏', onPress: startNewGame },
+              { text: 'Return to main screen', onPress: onBack },
+              { text: 'Start new game', onPress: startNewGame },
             ]
           );
-        }, 300);
+        };
+
+        setTimeout(handleGameOver, 300);
       }
-    }, 150);  // 延迟 150ms
+    }, 150); 
   };
 
   /**
@@ -296,17 +344,14 @@ export const GameScreen: React.FC<GameScreenProps> = ({ onBack }) => {
         </TouchableOpacity>
       </View>
 
-      {/* 游戏网格 - 添加手势识别和抖动动画 */}
-      <Animated.View
-        style={[
-          styles.gridWrapper,
-          { transform: [{ translateX: gridShakeAnim }] }
-        ]}
+      {/* 游戏网格 - 添加手势识别 */}
+      <View
+        style={styles.gridWrapper}
         onTouchStart={onTouchStart}
         onTouchEnd={onTouchEnd}
       >
         <GameGrid grid={grid} />
-      </Animated.View>
+      </View>
 
       {/* 陀螺仪开关（暂时禁用） */}
       <View style={styles.gyroContainer}>

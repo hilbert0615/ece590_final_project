@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { Animated, Text, StyleSheet } from 'react-native';
+import { Animated, Text, StyleSheet, Platform } from 'react-native';
 import { getTileStyle } from '../constants/tileColors';
 
 /**
@@ -78,11 +78,18 @@ export const Tile: React.FC<TileProps> = ({ value, isNew = false }) => {
     >
       {value !== 0 && (
         <Text
+          numberOfLines={1}
+          adjustsFontSizeToFit
+          minimumFontScale={0.5}
           style={[
             styles.tileText,
             {
               color: tileStyle.textColor,
               fontSize: tileStyle.fontSize,
+              // 仅在 Android 设置 lineHeight，避免 iOS 视觉偏上
+              lineHeight: Platform.OS === 'android' ? Math.round(tileStyle.fontSize * 1.15) : undefined,
+              // iOS 轻微下移 1px，抵消系统字体基线的“偏上”观感
+              paddingTop: Platform.OS === 'ios' ? 1 : 0,
             }
           ]}
         >
@@ -111,5 +118,8 @@ const styles = StyleSheet.create({
   },
   tileText: {
     fontWeight: 'bold',
+    textAlign: 'center',      // 水平居中
+    textAlignVertical: 'center',  // 垂直居中 (Android)
+    includeFontPadding: false,    // 移除 Android 字体内边距，确保真正居中
   },
 });

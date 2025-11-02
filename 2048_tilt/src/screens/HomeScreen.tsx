@@ -1,44 +1,104 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, BackHandler, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS } from '../constants/colors';
 import { MenuButton } from '../components/MenuButton';
- import { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
+import {
+  getCurrentUser,
+  loadGameState,
+  SavedGameState,
+} from '../utils/storageUtils';
 
 /**
  * HomeScreen - 游戏主界面
  * 包含标题、菜单按钮和顶部图标
  */
 interface HomeScreenProps {
-  onNavigateToGame: () => void;  // 导航到游戏界面的回调
+  onNavigateToGame: () => void;  // 导航到游戏界面的回调（新游戏）
+  onResumeGame: (savedState: SavedGameState) => void;  // 导航到游戏界面的回调（Resume）
+  onNavigateToProfile: () => void;  // 导航到用户资料界面的回调
 }
 
-export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToGame }) => {
+export const HomeScreen: React.FC<HomeScreenProps> = ({
+  onNavigateToGame,
+  onResumeGame,
+  onNavigateToProfile,
+}) => {
 
   // 按钮点击处理函数
   const handleNewGame = () => {
-    console.log('New Game 按钮被点击');
+    console.log('New Game button pressed');
     onNavigateToGame();  // 跳转到游戏界面
   };
 
-  const handleResume = () => {
-    console.log('Resume 按钮被点击');
-    // TODO: 后续实现恢复游戏功能
+  const handleResume = async () => {
+    console.log('Resume button pressed');
+
+    // 1. 获取当前登录用户
+    const currentUser = await getCurrentUser();
+
+    if (!currentUser) {
+      Alert.alert('Alert', 'Please log in firstly to resume your game');
+      return;
+    }
+
+    // 2. 尝试加载该用户的游戏状态
+    const savedState = await loadGameState(currentUser);
+
+    if (!savedState) {
+      Alert.alert('Alert', 'Resume unavailable\nPlease click "New Game" to start');
+      return;
+    }
+
+    // 3. 恢复游戏
+    console.log(`Recover user: [${currentUser}] 's game, score: ${savedState.score}`);
+    onResumeGame(savedState);
   };
 
   const handleRecord = () => {
-    console.log('Record 按钮被点击');
+    console.log('Record button pressed');
     // TODO: 后续实现查看记录功能
   };
 
   const handleAbout = () => {
-    console.log('About 按钮被点击');
+    console.log('About button pressed');
     // TODO: 后续实现关于页面
   };
 
   const handleQuit = () => {
-    console.log('Quit 按钮被点击');
-    // TODO: 后续实现退出确认对话框
+    console.log('Quit button pressed');
+
+    Alert.alert(
+      'Quit Game',
+      'Quit Game?',
+      [
+        {
+          text: 'Canel',
+          style: 'cancel',
+        },
+        {
+          text: 'Quit',
+          style: 'destructive',
+          onPress: () => {
+            if (Platform.OS === 'android') {
+              // Android 可以直接退出应用
+              BackHandler.exitApp();
+            } else if (Platform.OS === 'ios') {
+              // iOS 不允许程序主动退出，显示提示
+              Alert.alert(
+                'Alert',
+                'iOS does not support manually exiting an app.\nPlease press the Home button to return to the home screen.',
+                [{ text: 'Got it' }]
+              );
+            } else {
+              // Web 或其他平台
+              console.log('The current platform does not support the exit operation.');
+            }
+          },
+        },
+      ]
+    );
   };
 
   const handleLocationIcon = () => {
@@ -48,7 +108,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToGame }) => {
 
   const handleUserIcon = () => {
     console.log('用户图标被点击');
-    // TODO: 后续实现登录/用户资料功能
+    onNavigateToProfile();  // 导航到用户资料界面
   };
 
   return (
@@ -74,14 +134,15 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToGame }) => {
 
       {/* 标题区域 */}
       <View style={styles.titleContainer}>
-        {/* "2048" 标题，向左倾斜 10 度 */}
-        <Text style={[styles.title2048, { transform: [{ rotate: '-10deg' }] }]}>
-          2048
-        </Text>
-        {/* "Tilt" 标题，向右倾斜 10 度 */}
-        <Text style={[styles.titleTilt, { transform: [{ rotate: '10deg' }] }]}>
-          Tilt
-        </Text>
+        {/* 用包裹容器应用旋转，避免 Text 初次渲染偶发不生效 */}
+        <View style={styles.tiltLeft}
+        >
+          <Text style={styles.title2048}>2048</Text>
+        </View>
+        <View style={styles.tiltRight}
+        >
+          <Text style={styles.titleTilt}>Tilt</Text>
+        </View>
       </View>
 
       {/* 菜单按钮区域 */}
@@ -126,6 +187,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 60,
     marginBottom: 40,
+  },
+
+  tiltLeft: {
+    transform: [{ rotate: '-10deg' }],
+  },
+  tiltRight: {
+    transform: [{ rotate: '10deg' }],
   },
   title2048: {
     fontSize: 72,

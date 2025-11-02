@@ -21,7 +21,7 @@ export const cloneGrid = (grid: Grid): Grid => {
 
 /**
  * 在网格中添加一个随机数字（2 或 4）
- * 90% 概率生成 2，10% 概率生成 4
+ * 80% 概率生成 2，20% 概率生成 4
  */
 export const addRandomTile = (grid: Grid): Grid => {
   const newGrid = cloneGrid(grid);
@@ -44,8 +44,8 @@ export const addRandomTile = (grid: Grid): Grid => {
   // 随机选择一个空格子
   const randomCell = emptyCells[Math.floor(Math.random() * emptyCells.length)];
 
-  // 90% 概率生成 2，10% 概率生成 4
-  const value = Math.random() < 0.9 ? 2 : 4;
+  // 80% 概率生成 2，20% 概率生成 4
+  const value = Math.random() < 0.8 ? 2 : 4;
 
   newGrid[randomCell.row][randomCell.col] = value;
 
