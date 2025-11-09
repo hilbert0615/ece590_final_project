@@ -88,7 +88,7 @@ export const Tile: React.FC<TileProps> = ({ value, isNew = false }) => {
               fontSize: tileStyle.fontSize,
               // 仅在 Android 设置 lineHeight，避免 iOS 视觉偏上
               lineHeight: Platform.OS === 'android' ? Math.round(tileStyle.fontSize * 1.15) : undefined,
-              // iOS 轻微下移 1px，抵消系统字体基线的“偏上”观感
+              // iOS 轻微下移 1px，抵消系统字体基线的偏上观感
               paddingTop: Platform.OS === 'ios' ? 1 : 0,
             }
           ]}

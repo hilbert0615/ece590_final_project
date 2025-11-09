@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, BackHandler, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS } from '../constants/colors';
 import { MenuButton } from '../components/MenuButton';
@@ -56,9 +56,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     onResumeGame(savedState);
   };
 
-  const handleRecord = () => {
-    console.log('Record button pressed');
-    // TODO: 后续实现查看记录功能
+  const handleRank = () => {
+    console.log('Rank button pressed');
+    // TODO: 后续实现排行榜功能
   };
 
   const handleAbout = () => {
@@ -66,53 +66,18 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     // TODO: 后续实现关于页面
   };
 
-  const handleQuit = () => {
-    console.log('Quit button pressed');
-
-    Alert.alert(
-      'Quit Game',
-      'Quit Game?',
-      [
-        {
-          text: 'Canel',
-          style: 'cancel',
-        },
-        {
-          text: 'Quit',
-          style: 'destructive',
-          onPress: () => {
-            if (Platform.OS === 'android') {
-              // Android 可以直接退出应用
-              BackHandler.exitApp();
-            } else if (Platform.OS === 'ios') {
-              // iOS 不允许程序主动退出，显示提示
-              Alert.alert(
-                'Alert',
-                'iOS does not support manually exiting an app.\nPlease press the Home button to return to the home screen.',
-                [{ text: 'Got it' }]
-              );
-            } else {
-              // Web 或其他平台
-              console.log('The current platform does not support the exit operation.');
-            }
-          },
-        },
-      ]
-    );
-  };
-
   const handleLocationIcon = () => {
-    console.log('位置图标被点击');
+    console.log('The location icon was clicked');
     // TODO: 后续实现位置权限请求
   };
 
   const handleUserIcon = () => {
-    console.log('用户图标被点击');
-    onNavigateToProfile();  // 导航到用户资料界面
+    console.log('The user icon was clicked');
+    onNavigateToProfile();  // 回到用户资料界面
   };
 
   return (
-  <SafeAreaView style={styles.container} edges={['top', 'right', 'bottom', 'left']}>
+    <SafeAreaView style={styles.container} edges={['top', 'right', 'bottom', 'left']}>
       {/* 顶部图标区域 */}
       <View style={styles.topIconsContainer}>
         {/* 左上角 - 位置图标 */}
@@ -134,7 +99,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 
       {/* 标题区域 */}
       <View style={styles.titleContainer}>
-        {/* 用包裹容器应用旋转，避免 Text 初次渲染偶发不生效 */}
         <View style={styles.tiltLeft}
         >
           <Text style={styles.title2048}>2048</Text>
@@ -149,9 +113,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
       <View style={styles.menuContainer}>
         <MenuButton title="New Game" onPress={handleNewGame} />
         <MenuButton title="Resume" onPress={handleResume} />
-        <MenuButton title="Record" onPress={handleRecord} />
+        <MenuButton title="Rank" onPress={handleRank} />
         <MenuButton title="About" onPress={handleAbout} />
-        <MenuButton title="Quit" onPress={handleQuit} />
       </View>
 
       {/* 底部版本号 */}
