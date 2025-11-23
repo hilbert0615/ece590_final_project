@@ -8,9 +8,12 @@ import {
   GestureResponderEvent,
   Animated,
   Easing,
+  Modal,
+  ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { Accelerometer } from 'expo-sensors';
 import { GameGrid } from '../components/GameGrid';
 import { COLORS } from '../constants/colors';
 import { Grid, Direction, GameHistory } from '../types/game';
@@ -55,8 +58,16 @@ export const GameScreen: React.FC<GameScreenProps> = ({ onBack, initialGameState
   // 当前用户名（用于保存游戏状态）
   const [currentUsername, setCurrentUsername] = useState<string>('guest');
 
-  // 陀螺仪模式状态（暂时不实现，预留架构）
+  // 陀螺仪模式状态
   const [isGyroMode, setIsGyroMode] = useState<boolean>(false);
+  const subscriptionRef = useRef<any>(null);
+  const canMoveRef = useRef(true);
+  // 使用 useRef 延迟绑定 handleMove，避免声明顺序问题
+  const handleMoveRef = useRef<((direction: Direction) => void) | null>(null);
+  const lastMoveTimeRef = useRef<number>(0); // 记录上次移动时间
+
+  // 帮助弹窗状态
+  const [isHelpModalVisible, setIsHelpModalVisible] = useState(false);
 
   // 手势识别相关状态
   const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(null);
@@ -257,15 +268,82 @@ export const GameScreen: React.FC<GameScreenProps> = ({ onBack, initialGameState
 
         setTimeout(handleGameOver, 300);
       }
-    }, 150); 
+    }, 150);
   };
+
+  // 更新 handleMoveRef
+  useEffect(() => {
+    handleMoveRef.current = handleMove;
+  }, [handleMove]);
+
+  // 陀螺仪控制逻辑
+  useEffect(() => {
+    if (isGyroMode) {
+      Accelerometer.setUpdateInterval(100);
+
+      // 确保先移除旧的（如果有）
+      if (subscriptionRef.current) {
+        subscriptionRef.current.remove();
+      }
+
+      subscriptionRef.current = Accelerometer.addListener(data => {
+        const { x, y } = data;
+        const THRESHOLD = 0.55; // 触发阈值
+        const MOVE_INTERVAL = 500; // 两次移动之间的最小间隔 (毫秒)
+
+        const now = Date.now();
+        // 如果距离上次移动时间太短，则忽略
+        if (now - lastMoveTimeRef.current < MOVE_INTERVAL) {
+          return;
+        }
+
+        // 检测倾斜
+        if (Math.abs(x) > THRESHOLD || Math.abs(y) > THRESHOLD) {
+          if (handleMoveRef.current) {
+            if (Math.abs(x) > Math.abs(y)) {
+              // 水平移动
+              if (x > THRESHOLD) {
+                // 向左倾斜 -> 右移 (修正：反转左右)
+                handleMoveRef.current(Direction.RIGHT);
+              } else {
+                // 向右倾斜 -> 左移 (修正：反转左右)
+                handleMoveRef.current(Direction.LEFT);
+              }
+            } else {
+              // 垂直移动
+              if (y > THRESHOLD) {
+                // 向下倾斜 -> 上移 (修正：y > 0 是向下倾斜，对应上移)
+                handleMoveRef.current(Direction.UP);
+              } else {
+                // 向上倾斜 -> 下移 (修正：y < 0 是向上倾斜，对应下移)
+                handleMoveRef.current(Direction.DOWN);
+              }
+            }
+            // 更新上次移动时间
+            lastMoveTimeRef.current = now;
+          }
+        }
+      });
+    } else {
+      if (subscriptionRef.current) {
+        subscriptionRef.current.remove();
+        subscriptionRef.current = null;
+      }
+    }
+
+    return () => {
+      if (subscriptionRef.current) {
+        subscriptionRef.current.remove();
+        subscriptionRef.current = null;
+      }
+    };
+  }, [isGyroMode]);
 
   /**
    * 手势识别 - 触摸开始
    */
   const onTouchStart = (event: GestureResponderEvent) => {
-    if (isGyroMode) return;  // 陀螺仪模式下禁用手势
-
+    // 允许同时使用手势和陀螺仪
     const { locationX, locationY } = event.nativeEvent;
     setTouchStart({ x: locationX, y: locationY });
   };
@@ -274,7 +352,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ onBack, initialGameState
    * 手势识别 - 触摸结束（判断滑动方向）
    */
   const onTouchEnd = (event: GestureResponderEvent) => {
-    if (isGyroMode || !touchStart || isMoving) return;
+    if (!touchStart || isMoving) return;
 
     const { locationX, locationY } = event.nativeEvent;
     const diffX = locationX - touchStart.x;
@@ -311,7 +389,18 @@ export const GameScreen: React.FC<GameScreenProps> = ({ onBack, initialGameState
       {/* 顶部栏 */}
       <View style={styles.header}>
         {/* 返回按钮 */}
-        <TouchableOpacity onPress={onBack} style={styles.backButton}>
+        <TouchableOpacity
+          onPress={() => {
+            // 确保离开时关闭陀螺仪
+            setIsGyroMode(false);
+            if (subscriptionRef.current) {
+              subscriptionRef.current.remove();
+              subscriptionRef.current = null;
+            }
+            onBack();
+          }}
+          style={styles.backButton}
+        >
           <Ionicons name="arrow-back" size={28} color={COLORS.gray} />
         </TouchableOpacity>
 
@@ -366,20 +455,85 @@ export const GameScreen: React.FC<GameScreenProps> = ({ onBack, initialGameState
         <GameGrid grid={grid} />
       </View>
 
-      {/* 陀螺仪开关（暂时禁用） */}
-      <View style={styles.gyroContainer}>
-        <Text style={styles.gyroText}>
-          陀螺仪控制 {isGyroMode ? '(已开启)' : '(未开启)'}
-        </Text>
-        <Text style={styles.gyroHint}>
-          (功能开发中，敬请期待)
-        </Text>
+      {/* 左下角帮助按钮 */}
+      <View style={styles.helpButtonContainer}>
+        <Text style={styles.gyroLabel}>Help</Text>
+        <TouchableOpacity
+          style={styles.helpButton}
+          onPress={() => setIsHelpModalVisible(true)}
+          activeOpacity={0.8}
+        >
+          <Ionicons name="help" size={32} color={COLORS.gray} />
+        </TouchableOpacity>
       </View>
+
+      {/* 陀螺仪控制区域 */}
+      <View style={styles.gyroControlContainer}>
+        <Text style={styles.gyroLabel}>Gyro Control</Text>
+        <TouchableOpacity
+          style={[styles.gyroButton, isGyroMode && styles.gyroButtonActive]}
+          onPress={() => setIsGyroMode(!isGyroMode)}
+          activeOpacity={0.8}
+        >
+          <Ionicons
+            name={isGyroMode ? "hardware-chip" : "hardware-chip-outline"}
+            size={32}
+            color={isGyroMode ? "#FFFFFF" : COLORS.gray}
+          />
+        </TouchableOpacity>
+      </View>
+
+      {/* 帮助弹窗 */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={isHelpModalVisible}
+        onRequestClose={() => setIsHelpModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>How to Play</Text>
+              <TouchableOpacity
+                onPress={() => setIsHelpModalVisible(false)}
+                style={styles.closeButton}
+              >
+                <Ionicons name="close" size={24} color={COLORS.gray} />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={styles.modalBody}>
+              <Text style={styles.sectionTitle}>Game Rules</Text>
+              <Text style={styles.modalText}>
+                Swipe (Up, Down, Left, Right) to move the tiles. When two tiles with the same number touch, they merge into one. Join the numbers and get to the 2048 tile!
+              </Text>
+
+              <Text style={styles.sectionTitle}>Tilt Control Mode</Text>
+              <Text style={styles.modalText}>
+                Toggle the button in the bottom right to enable Tilt Control. Tilt your device to move tiles:
+              </Text>
+              <View style={styles.bulletPoint}>
+                <Text style={styles.modalText}>• Tilt Left/Right → Move Left/Right</Text>
+                <Text style={styles.modalText}>• Tilt Forward (Away) → Move Up</Text>
+                <Text style={styles.modalText}>• Tilt Backward (Towards you) → Move Down</Text>
+              </View>
+              <Text style={styles.noteText}>
+                Note: You can use both touch gestures and tilt control at the same time.
+              </Text>
+            </ScrollView>
+
+            <TouchableOpacity
+              style={styles.modalButton}
+              onPress={() => setIsHelpModalVisible(false)}
+            >
+              <Text style={styles.modalButtonText}>Got it!</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
-};
-
-const styles = StyleSheet.create({
+}; const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.lightYellow,
@@ -459,19 +613,136 @@ const styles = StyleSheet.create({
     marginVertical: 20,
   },
 
-  // 陀螺仪区域样式
-  gyroContainer: {
+  // 陀螺仪控制区域样式
+  gyroControlContainer: {
+    position: 'absolute',
+    bottom: 40,
+    right: 30,
     alignItems: 'center',
-    marginTop: 20,
+    zIndex: 100,
   },
-  gyroText: {
-    fontSize: 16,
-    color: '#776E65',
-    fontWeight: '600',
-  },
-  gyroHint: {
+  gyroLabel: {
     fontSize: 12,
     color: COLORS.gray,
-    marginTop: 4,
+    marginBottom: 8,
+    fontWeight: '600',
+    textShadowColor: 'rgba(255, 255, 255, 0.5)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
+  gyroButton: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 8,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+  },
+  gyroButtonActive: {
+    backgroundColor: COLORS.orange,
+    borderColor: COLORS.orange,
+  },
+
+  // 帮助按钮样式
+  helpButtonContainer: {
+    position: 'absolute',
+    bottom: 40,
+    left: 30,
+    alignItems: 'center',
+    zIndex: 100,
+  },
+  helpButton: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 8,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+  },
+
+  // Modal
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    width: '85%',
+    maxHeight: '80%',
+    backgroundColor: '#FAF8EF',
+    borderRadius: 16,
+    padding: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 10,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  modalTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#776E65',
+  },
+  closeButton: {
+    padding: 4,
+  },
+  modalBody: {
+    marginBottom: 24,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: COLORS.orange,
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  modalText: {
+    fontSize: 16,
+    color: '#776E65',
+    lineHeight: 24,
+    marginBottom: 8,
+  },
+  bulletPoint: {
+    marginLeft: 8,
+    marginBottom: 8,
+  },
+  noteText: {
+    fontSize: 14,
+    color: COLORS.gray,
+    fontStyle: 'italic',
+    marginTop: 12,
+  },
+  modalButton: {
+    backgroundColor: COLORS.orange,
+    borderRadius: 8,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  modalButtonText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+  },
+
 });
