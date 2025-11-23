@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   RefreshControl,
+  useWindowDimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -159,56 +160,19 @@ export const RankScreen: React.FC<RankScreenProps> = ({ onBack }) => {
     );
   };
 
-  return (
-    <SafeAreaView style={styles.container} edges={['top', 'right', 'bottom', 'left']}>
-      {/* 顶部导航栏 */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={onBack} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={28} color={COLORS.darkOrange} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Leaderboard</Text>
-        <View style={styles.placeholder} />
-      </View>
+  const { width, height } = useWindowDimensions();
+  const isLandscape = width > height;
 
-      {/* 标签页切换 */}
-      <View style={styles.tabContainer}>
-        <TouchableOpacity
-          style={[styles.tab, activeTab === 'global' && styles.activeTab]}
-          onPress={() => switchTab('global')}
-        >
-          <Ionicons
-            name="earth"
-            size={20}
-            color={activeTab === 'global' ? COLORS.darkOrange : COLORS.gray}
-          />
-          <Text
-            style={[styles.tabText, activeTab === 'global' && styles.activeTabText]}
-          >
-            Global
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.tab, activeTab === 'city' && styles.activeTab]}
-          onPress={() => switchTab('city')}
-        >
-          <Ionicons
-            name="location"
-            size={20}
-            color={activeTab === 'city' ? COLORS.darkOrange : COLORS.gray}
-          />
-          <Text style={[styles.tabText, activeTab === 'city' && styles.activeTabText]}>
-            {userCity || 'My City'}
-          </Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* 排行榜内容 */}
-      {loading && !refreshing ? (
+  const renderContent = () => {
+    if (loading && !refreshing) {
+      return (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={COLORS.orange} />
         </View>
-      ) : error ? (
+      );
+    }
+    if (error) {
+      return (
         <View style={styles.errorContainer}>
           <Ionicons name="alert-circle-outline" size={48} color={COLORS.gray} />
           <Text style={styles.errorText}>{error}</Text>
@@ -216,7 +180,10 @@ export const RankScreen: React.FC<RankScreenProps> = ({ onBack }) => {
             <Text style={styles.retryButtonText}>Retry</Text>
           </TouchableOpacity>
         </View>
-      ) : leaderboard.length === 0 ? (
+      );
+    }
+    if (leaderboard.length === 0) {
+      return (
         <View style={styles.emptyContainer}>
           <Ionicons name="trophy-outline" size={48} color={COLORS.gray} />
           <Text style={styles.emptyText}>
@@ -225,16 +192,118 @@ export const RankScreen: React.FC<RankScreenProps> = ({ onBack }) => {
               : 'No scores yet.\nStart playing to compete!'}
           </Text>
         </View>
+      );
+    }
+    return (
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+        }
+      >
+        {leaderboard.map((item, index) => renderLeaderboardItem(item, index))}
+      </ScrollView>
+    );
+  };
+
+  return (
+    <SafeAreaView style={styles.container} edges={['top', 'right', 'bottom', 'left']}>
+      {isLandscape ? (
+        <View style={styles.landscapeContainer}>
+          <View style={styles.landscapeLeftPanel}>
+            <View style={styles.header}>
+              <TouchableOpacity onPress={onBack} style={styles.backButton}>
+                <Ionicons name="arrow-back" size={28} color={COLORS.darkOrange} />
+              </TouchableOpacity>
+              <Text style={styles.headerTitle}>Leaderboard</Text>
+              <View style={styles.placeholder} />
+            </View>
+
+            <View style={styles.tabContainerLandscape}>
+              <TouchableOpacity
+                style={[styles.tab, activeTab === 'global' && styles.activeTab]}
+                onPress={() => switchTab('global')}
+              >
+                <Ionicons
+                  name="earth"
+                  size={20}
+                  color={activeTab === 'global' ? COLORS.darkOrange : COLORS.gray}
+                />
+                <Text
+                  style={[styles.tabText, activeTab === 'global' && styles.activeTabText]}
+                >
+                  Global
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.tab, activeTab === 'city' && styles.activeTab]}
+                onPress={() => switchTab('city')}
+              >
+                <Ionicons
+                  name="location"
+                  size={20}
+                  color={activeTab === 'city' ? COLORS.darkOrange : COLORS.gray}
+                />
+                <Text style={[styles.tabText, activeTab === 'city' && styles.activeTabText]}>
+                  {userCity || 'My City'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          <View style={styles.landscapeRightPanel}>
+            {renderContent()}
+          </View>
+        </View>
       ) : (
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
-          }
-        >
-          {leaderboard.map((item, index) => renderLeaderboardItem(item, index))}
-        </ScrollView>
+        <>
+          {/* 顶部导航栏 */}
+          <View style={styles.header}>
+            <TouchableOpacity onPress={onBack} style={styles.backButton}>
+              <Ionicons name="arrow-back" size={28} color={COLORS.darkOrange} />
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>Leaderboard</Text>
+            <View style={styles.placeholder} />
+          </View>
+
+          {/* 标签页切换 */}
+          <View style={styles.tabContainer}>
+            <TouchableOpacity
+              style={[styles.tab, activeTab === 'global' && styles.activeTab]}
+              onPress={() => switchTab('global')}
+            >
+              <Ionicons
+                name="earth"
+                size={20}
+                color={activeTab === 'global' ? COLORS.darkOrange : COLORS.gray}
+              />
+              <Text
+                style={[styles.tabText, activeTab === 'global' && styles.activeTabText]}
+              >
+                Global
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.tab, activeTab === 'city' && styles.activeTab]}
+              onPress={() => switchTab('city')}
+            >
+              <Ionicons
+                name="location"
+                size={20}
+                color={activeTab === 'city' ? COLORS.darkOrange : COLORS.gray}
+              />
+              <Text style={[styles.tabText, activeTab === 'city' && styles.activeTabText]}>
+                {userCity || 'My City'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* 排行榜内容 */}
+          {renderContent()}
+        </>
       )}
     </SafeAreaView>
   );
@@ -422,5 +491,23 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 16,
     lineHeight: 24,
+  },
+
+  // 横屏模式样式
+  landscapeContainer: {
+    flex: 1,
+    flexDirection: 'row',
+  },
+  landscapeLeftPanel: {
+    flex: 1,
+    borderRightWidth: 1,
+    borderRightColor: '#E0E0E0',
+  },
+  landscapeRightPanel: {
+    flex: 2,
+  },
+  tabContainerLandscape: {
+    padding: 16,
+    gap: 12,
   },
 });

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, ActivityIndicator, ScrollView, Image, } from 'react-native';
+
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -9,6 +9,7 @@ import { getUserScoreHistory } from '../services/scoreService';
 import { UserProfile, GameScore } from '../services/supabase';
 import * as ImagePicker from 'expo-image-picker';
 import { uploadAvatar } from '../services/storageService';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, ActivityIndicator, ScrollView, Image, useWindowDimensions } from 'react-native';
 
 /**
  * UserProfileScreen - 用户资料界面
@@ -244,6 +245,9 @@ export const UserProfileScreen: React.FC<UserProfileScreenProps> = ({
     );
   }
 
+  const { width, height } = useWindowDimensions();
+  const isLandscape = width > height;
+
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right', 'bottom']}>
       {/* 顶部栏 */}
@@ -260,60 +264,125 @@ export const UserProfileScreen: React.FC<UserProfileScreenProps> = ({
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* 头像和用户名区域 */}
-        <View style={styles.topSection}>
-          {/* 头像 */}
-          <TouchableOpacity
-            style={styles.avatarWrapper}
-            onPress={handleAvatarPress}
-            disabled={isUploading}
-            activeOpacity={0.7}
-          >
-            {profile.avatar_url ? (
-              <Image source={{ uri: profile.avatar_url }} style={styles.avatarImage} />
-            ) : (
-              <View style={styles.avatarPlaceholder}>
-                <Ionicons name="person" size={50} color="#BBADA0" />
+        {isLandscape ? (
+          <View style={styles.landscapeContainer}>
+            <View style={styles.landscapeLeftPanel}>
+              {/* 头像和用户名区域 */}
+              <View style={styles.topSection}>
+                {/* 头像 */}
+                <TouchableOpacity
+                  style={styles.avatarWrapper}
+                  onPress={handleAvatarPress}
+                  disabled={isUploading}
+                  activeOpacity={0.7}
+                >
+                  {profile.avatar_url ? (
+                    <Image source={{ uri: profile.avatar_url }} style={styles.avatarImage} />
+                  ) : (
+                    <View style={styles.avatarPlaceholder}>
+                      <Ionicons name="person" size={50} color="#BBADA0" />
+                    </View>
+                  )}
+                  {/* 相机图标提示 */}
+                  <View style={styles.avatarOverlay}>
+                    <Ionicons name="camera" size={24} color="#FFFFFF" />
+                  </View>
+                </TouchableOpacity>
+
+                {isUploading && (
+                  <Text style={styles.uploadingText}>Uploading...</Text>
+                )}
+
+                {/* 用户名 */}
+                <Text style={styles.username}>{profile.username}</Text>
+
+                {/* 邮箱 */}
+                <Text style={styles.email}>{email || '-'}</Text>
               </View>
-            )}
-            {/* 相机图标提示 */}
-            <View style={styles.avatarOverlay}>
-              <Ionicons name="camera" size={24} color="#FFFFFF" />
             </View>
-          </TouchableOpacity>
 
-          {isUploading && (
-            <Text style={styles.uploadingText}>Uploading...</Text>
-          )}
+            <View style={styles.landscapeRightPanel}>
+              {/* 最高分卡片 */}
+              <View style={styles.statsCardContainer}>
+                <View style={styles.statsCard}>
+                  <Ionicons name="trophy" size={32} color={COLORS.orange} />
+                  <View style={styles.statsTextContainer}>
+                    <Text style={styles.statsLabel}>Highest Score</Text>
+                    <Text style={styles.statsValue}>{profile.best_score}</Text>
+                  </View>
+                </View>
+              </View>
 
-          {/* 用户名 */}
-          <Text style={styles.username}>{profile.username}</Text>
-
-          {/* 邮箱 */}
-          <Text style={styles.email}>{email || '-'}</Text>
-        </View>
-
-        {/* 最高分卡片 */}
-        <View style={styles.statsCardContainer}>
-          <View style={styles.statsCard}>
-            <Ionicons name="trophy" size={32} color={COLORS.orange} />
-            <View style={styles.statsTextContainer}>
-              <Text style={styles.statsLabel}>Highest Score</Text>
-              <Text style={styles.statsValue}>{profile.best_score}</Text>
+              {/* 登出按钮 */}
+              <View style={styles.logoutButtonContainer}>
+                <TouchableOpacity
+                  style={styles.logoutButton}
+                  onPress={handleLogout}
+                >
+                  <Ionicons name="log-out-outline" size={20} color="#FFFFFF" />
+                  <Text style={styles.logoutButtonText}>Logout</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
-        </View>
+        ) : (
+          <>
+            {/* 头像和用户名区域 */}
+            <View style={styles.topSection}>
+              {/* 头像 */}
+              <TouchableOpacity
+                style={styles.avatarWrapper}
+                onPress={handleAvatarPress}
+                disabled={isUploading}
+                activeOpacity={0.7}
+              >
+                {profile.avatar_url ? (
+                  <Image source={{ uri: profile.avatar_url }} style={styles.avatarImage} />
+                ) : (
+                  <View style={styles.avatarPlaceholder}>
+                    <Ionicons name="person" size={50} color="#BBADA0" />
+                  </View>
+                )}
+                {/* 相机图标提示 */}
+                <View style={styles.avatarOverlay}>
+                  <Ionicons name="camera" size={24} color="#FFFFFF" />
+                </View>
+              </TouchableOpacity>
 
-        {/* 登出按钮 */}
-        <View style={styles.logoutButtonContainer}>
-          <TouchableOpacity
-            style={styles.logoutButton}
-            onPress={handleLogout}
-          >
-            <Ionicons name="log-out-outline" size={20} color="#FFFFFF" />
-            <Text style={styles.logoutButtonText}>Logout</Text>
-          </TouchableOpacity>
-        </View>
+              {isUploading && (
+                <Text style={styles.uploadingText}>Uploading...</Text>
+              )}
+
+              {/* 用户名 */}
+              <Text style={styles.username}>{profile.username}</Text>
+
+              {/* 邮箱 */}
+              <Text style={styles.email}>{email || '-'}</Text>
+            </View>
+
+            {/* 最高分卡片 */}
+            <View style={styles.statsCardContainer}>
+              <View style={styles.statsCard}>
+                <Ionicons name="trophy" size={32} color={COLORS.orange} />
+                <View style={styles.statsTextContainer}>
+                  <Text style={styles.statsLabel}>Highest Score</Text>
+                  <Text style={styles.statsValue}>{profile.best_score}</Text>
+                </View>
+              </View>
+            </View>
+
+            {/* 登出按钮 */}
+            <View style={styles.logoutButtonContainer}>
+              <TouchableOpacity
+                style={styles.logoutButton}
+                onPress={handleLogout}
+              >
+                <Ionicons name="log-out-outline" size={20} color="#FFFFFF" />
+                <Text style={styles.logoutButtonText}>Logout</Text>
+              </TouchableOpacity>
+            </View>
+          </>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -553,5 +622,27 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: COLORS.gray,
     textDecorationLine: 'underline',
+  },
+
+  // 横屏模式样式
+  landscapeContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  landscapeLeftPanel: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRightWidth: 1,
+    borderRightColor: '#E0E0E0',
+    paddingRight: 20,
+  },
+  landscapeRightPanel: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingLeft: 20,
   },
 });

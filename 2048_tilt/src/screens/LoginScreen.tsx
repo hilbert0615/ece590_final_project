@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, ActivityIndicator, Platform, useWindowDimensions, KeyboardAvoidingView, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../constants/colors';
@@ -23,6 +23,8 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');  // 注册时需要
   const [isLoading, setIsLoading] = useState(false);
+  const { width, height } = useWindowDimensions();
+  const isLandscape = width > height;
 
   /**
    * 处理登录
@@ -108,112 +110,114 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
         >
-          {/* 标题 */}
-          <View style={styles.titleContainer}>
-            {/* 使用包裹容器来做旋转，避免 Text 初次渲染偶发不生效 */}
-            <View style={styles.tiltLeft}>
-              <Text style={styles.title2048}>2048</Text>
+          <View style={[styles.contentContainer, isLandscape && styles.contentContainerLandscape]}>
+            {/* 标题 */}
+            <View style={[styles.titleContainer, isLandscape && styles.titleContainerLandscape]}>
+              {/* 使用包裹容器来做旋转，避免 Text 初次渲染偶发不生效 */}
+              <View style={styles.tiltLeft}>
+                <Text style={styles.title2048}>2048</Text>
+              </View>
+              <View style={styles.tiltRight}>
+                <Text style={styles.titleTilt}>Tilt</Text>
+              </View>
             </View>
-            <View style={styles.tiltRight}>
-              <Text style={styles.titleTilt}>Tilt</Text>
-            </View>
-          </View>
 
-          {/* 表单 */}
-          <View style={styles.formContainer}>
-            <Text style={styles.formTitle}>
-              {isRegisterMode ? 'Create account' : 'Login'}
-            </Text>
+            {/* 表单 */}
+            <View style={[styles.formContainer, isLandscape && styles.formContainerLandscape]}>
+              <Text style={styles.formTitle}>
+                {isRegisterMode ? 'Create account' : 'Login'}
+              </Text>
 
-            {/* 注册模式下显示用户名输入 */}
-            {isRegisterMode && (
+              {/* 注册模式下显示用户名输入 */}
+              {isRegisterMode && (
+                <TextInput
+                  style={styles.input}
+                  placeholder="Username"
+                  placeholderTextColor={COLORS.gray}
+                  value={username}
+                  onChangeText={setUsername}
+                  autoCapitalize="none"
+                  editable={!isLoading}
+                />
+              )}
+
+              {/* 邮箱输入 */}
               <TextInput
                 style={styles.input}
-                placeholder="Username"
+                placeholder="Email"
                 placeholderTextColor={COLORS.gray}
-                value={username}
-                onChangeText={setUsername}
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
                 autoCapitalize="none"
                 editable={!isLoading}
               />
-            )}
 
-            {/* 邮箱输入 */}
-            <TextInput
-              style={styles.input}
-              placeholder="Email"
-              placeholderTextColor={COLORS.gray}
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              editable={!isLoading}
-            />
+              {/* 密码输入 */}
+              <TextInput
+                style={styles.input}
+                placeholder={isRegisterMode ? "Password" : "Password"}
+                placeholderTextColor={COLORS.gray}
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+                autoCapitalize="none"
+                editable={!isLoading}
+              />
 
-            {/* 密码输入 */}
-            <TextInput
-              style={styles.input}
-              placeholder={isRegisterMode ? "Password" : "Password"}
-              placeholderTextColor={COLORS.gray}
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-              autoCapitalize="none"
-              editable={!isLoading}
-            />
-
-            {/* 注册模式下显示要求提示 */}
-            {isRegisterMode && (
-              <View style={styles.hintsContainer}>
-                <View style={styles.passwordHintContainer}>
-                  <Ionicons name="information-circle-outline" size={16} color={COLORS.gray} />
-                  <Text style={styles.passwordHint}>
-                    Username must be at least 3 characters
-                  </Text>
+              {/* 注册模式下显示要求提示 */}
+              {isRegisterMode && (
+                <View style={styles.hintsContainer}>
+                  <View style={styles.passwordHintContainer}>
+                    <Ionicons name="information-circle-outline" size={16} color={COLORS.gray} />
+                    <Text style={styles.passwordHint}>
+                      Username must be at least 3 characters
+                    </Text>
+                  </View>
+                  <View style={styles.passwordHintContainer}>
+                    <Ionicons name="information-circle-outline" size={16} color={COLORS.gray} />
+                    <Text style={styles.passwordHint}>
+                      Password must be at least 6 characters
+                    </Text>
+                  </View>
                 </View>
-                <View style={styles.passwordHintContainer}>
-                  <Ionicons name="information-circle-outline" size={16} color={COLORS.gray} />
-                  <Text style={styles.passwordHint}>
-                    Password must be at least 6 characters
-                  </Text>
-                </View>
-              </View>
-            )}
-
-            {/* 登录/注册按钮 */}
-            <TouchableOpacity
-              style={[styles.button, styles.primaryButton]}
-              onPress={isRegisterMode ? handleSignUp : handleSignIn}
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <ActivityIndicator color="#FFFFFF" />
-              ) : (
-                <Text style={styles.buttonText}>
-                  {isRegisterMode ? 'Register' : 'Login'}
-                </Text>
               )}
-            </TouchableOpacity>
 
-            {/* 切换模式按钮 */}
-            <TouchableOpacity
-              style={styles.switchButton}
-              onPress={toggleMode}
-              disabled={isLoading}
-            >
-              <Text style={styles.switchText}>
-                {isRegisterMode ? 'Already have an account? Login' : 'No account? Register'}
-              </Text>
-            </TouchableOpacity>
+              {/* 登录/注册按钮 */}
+              <TouchableOpacity
+                style={[styles.button, styles.primaryButton]}
+                onPress={isRegisterMode ? handleSignUp : handleSignIn}
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <ActivityIndicator color="#FFFFFF" />
+                ) : (
+                  <Text style={styles.buttonText}>
+                    {isRegisterMode ? 'Register' : 'Login'}
+                  </Text>
+                )}
+              </TouchableOpacity>
 
-            {/* 访客模式按钮 */}
-            <TouchableOpacity
-              style={[styles.button, styles.guestButton]}
-              onPress={onGuestMode}
-              disabled={isLoading}
-            >
-              <Text style={styles.guestButtonText}>Continue as Guest</Text>
-            </TouchableOpacity>
+              {/* 切换模式按钮 */}
+              <TouchableOpacity
+                style={styles.switchButton}
+                onPress={toggleMode}
+                disabled={isLoading}
+              >
+                <Text style={styles.switchText}>
+                  {isRegisterMode ? 'Already have an account? Login' : 'No account? Register'}
+                </Text>
+              </TouchableOpacity>
+
+              {/* 访客模式按钮 */}
+              <TouchableOpacity
+                style={[styles.button, styles.guestButton]}
+                onPress={onGuestMode}
+                disabled={isLoading}
+              >
+                <Text style={styles.guestButtonText}>Continue as Guest</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -234,11 +238,28 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 32,
   },
+  contentContainer: {
+    width: '100%',
+    alignItems: 'center',
+  },
+  contentContainerLandscape: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
 
   // 标题样式
   titleContainer: {
     alignItems: 'center',
     marginBottom: 60,
+  },
+  titleContainerLandscape: {
+    marginBottom: 0,
+    marginRight: 40,
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 
   tiltLeft: {
@@ -262,6 +283,10 @@ const styles = StyleSheet.create({
   // 表单样式
   formContainer: {
     width: '100%',
+  },
+  formContainerLandscape: {
+    flex: 1,
+    maxWidth: 500,
   },
   formTitle: {
     fontSize: 24,

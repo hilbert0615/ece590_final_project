@@ -10,6 +10,7 @@ import {
   Easing,
   Modal,
   ScrollView,
+  useWindowDimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -77,6 +78,9 @@ export const GameScreen: React.FC<GameScreenProps> = ({ onBack, initialGameState
 
   // 防抖：防止连续滑动
   const [isMoving, setIsMoving] = useState<boolean>(false);
+
+  const { width, height } = useWindowDimensions();
+  const isLandscape = width > height;
 
   // 初始化：获取当前用户名
   useEffect(() => {
@@ -385,103 +389,201 @@ export const GameScreen: React.FC<GameScreenProps> = ({ onBack, initialGameState
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
-      {/* 顶部栏 */}
-      <View style={styles.header}>
-        {/* 返回按钮 */}
-        <TouchableOpacity
-          onPress={() => {
-            // 确保离开时关闭陀螺仪
-            setIsGyroMode(false);
-            if (subscriptionRef.current) {
-              subscriptionRef.current.remove();
-              subscriptionRef.current = null;
-            }
-            onBack();
-          }}
-          style={styles.backButton}
-        >
-          <Ionicons name="arrow-back" size={28} color={COLORS.gray} />
-        </TouchableOpacity>
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right', 'bottom']}>
+      {isLandscape ? (
+        <View style={styles.landscapeContainer}>
+          {/* Left Column: Title, Back, Score */}
+          <View style={styles.landscapeLeftColumn}>
+            <TouchableOpacity
+              onPress={() => {
+                setIsGyroMode(false);
+                if (subscriptionRef.current) {
+                  subscriptionRef.current.remove();
+                  subscriptionRef.current = null;
+                }
+                onBack();
+              }}
+              style={styles.backButtonLandscape}
+            >
+              <Ionicons name="arrow-back" size={28} color={COLORS.gray} />
+            </TouchableOpacity>
 
-        {/* 标题 */}
-        <Text style={styles.title}>2048 Tilt</Text>
+            <Text style={styles.titleLandscape}>2048 Tilt</Text>
 
-        {/* 占位符（保持布局对称） */}
-        <View style={styles.backButton} />
-      </View>
+            <View style={styles.scoreContainerLandscape}>
+              <Animated.View
+                style={[
+                  styles.scoreBox,
+                  { transform: [{ scale: scorePopAnim }] }
+                ]}
+              >
+                <Text style={styles.scoreLabel}>SCORE</Text>
+                <Text style={styles.scoreValue}>{score}</Text>
+              </Animated.View>
+              <View style={[styles.scoreBox, { marginTop: 10 }]}>
+                <Text style={styles.scoreLabel}>BEST</Text>
+                <Text style={styles.scoreValue}>{bestScore}</Text>
+              </View>
+            </View>
+          </View>
 
-      {/* 分数显示区域 - 添加动画效果 */}
-      <View style={styles.scoreContainer}>
-        <Animated.View
-          style={[
-            styles.scoreBox,
-            { transform: [{ scale: scorePopAnim }] }
-          ]}
-        >
-          <Text style={styles.scoreLabel}>SCORE</Text>
-          <Text style={styles.scoreValue}>{score}</Text>
-        </Animated.View>
-        <View style={styles.scoreBox}>
-          <Text style={styles.scoreLabel}>BEST</Text>
-          <Text style={styles.scoreValue}>{bestScore}</Text>
+          {/* Center Column: Grid */}
+          <View style={styles.landscapeCenterColumn}>
+            <View
+              style={styles.gridWrapperLandscape}
+              onTouchStart={onTouchStart}
+              onTouchEnd={onTouchEnd}
+            >
+              <GameGrid grid={grid} />
+            </View>
+          </View>
+
+          {/* Right Column: Controls */}
+          <View style={styles.landscapeRightColumn}>
+            <TouchableOpacity
+              style={styles.gameButtonLandscape}
+              onPress={startNewGame}
+              disabled={isMoving}
+            >
+              <Text style={styles.buttonText}>New Game</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.gameButtonLandscape}
+              onPress={undo}
+              disabled={isMoving}
+            >
+              <Text style={styles.buttonText}>Undo</Text>
+            </TouchableOpacity>
+
+            <View style={styles.landscapeControlButtons}>
+              <View style={styles.controlButtonWrapper}>
+                <Text style={styles.gyroLabel}>Help</Text>
+                <TouchableOpacity
+                  style={styles.helpButtonLandscape}
+                  onPress={() => setIsHelpModalVisible(true)}
+                  activeOpacity={0.8}
+                >
+                  <Ionicons name="help" size={32} color={COLORS.gray} />
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.controlButtonWrapper}>
+                <Text style={styles.gyroLabel}>Tilt</Text>
+                <TouchableOpacity
+                  style={[styles.gyroButtonLandscape, isGyroMode && styles.gyroButtonActive]}
+                  onPress={() => setIsGyroMode(!isGyroMode)}
+                  activeOpacity={0.8}
+                >
+                  <Ionicons
+                    name={isGyroMode ? "hardware-chip" : "hardware-chip-outline"}
+                    size={32}
+                    color={isGyroMode ? "#FFFFFF" : COLORS.gray}
+                  />
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
         </View>
-      </View>
+      ) : (
+        <>
+          {/* 顶部栏 */}
+          <View style={styles.header}>
+            {/* 返回按钮 */}
+            <TouchableOpacity
+              onPress={() => {
+                // 确保离开时关闭陀螺仪
+                setIsGyroMode(false);
+                if (subscriptionRef.current) {
+                  subscriptionRef.current.remove();
+                  subscriptionRef.current = null;
+                }
+                onBack();
+              }}
+              style={styles.backButton}
+            >
+              <Ionicons name="arrow-back" size={28} color={COLORS.gray} />
+            </TouchableOpacity>
 
-      {/* 按钮区域 */}
-      <View style={styles.buttonContainer}>
-        <TouchableOpacity
-          style={styles.gameButton}
-          onPress={startNewGame}
-          disabled={isMoving}
-        >
-          <Text style={styles.buttonText}>New Game</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.gameButton}
-          onPress={undo}
-          disabled={isMoving}
-        >
-          <Text style={styles.buttonText}>Undo</Text>
-        </TouchableOpacity>
-      </View>
+            {/* 标题 */}
+            <Text style={styles.title}>2048 Tilt</Text>
 
-      {/* 游戏网格 - 添加手势识别 */}
-      <View
-        style={styles.gridWrapper}
-        onTouchStart={onTouchStart}
-        onTouchEnd={onTouchEnd}
-      >
-        <GameGrid grid={grid} />
-      </View>
+            {/* 占位符（保持布局对称） */}
+            <View style={styles.backButton} />
+          </View>
 
-      {/* 左下角帮助按钮 */}
-      <View style={styles.helpButtonContainer}>
-        <Text style={styles.gyroLabel}>Help</Text>
-        <TouchableOpacity
-          style={styles.helpButton}
-          onPress={() => setIsHelpModalVisible(true)}
-          activeOpacity={0.8}
-        >
-          <Ionicons name="help" size={32} color={COLORS.gray} />
-        </TouchableOpacity>
-      </View>
+          {/* 分数显示区域 - 添加动画效果 */}
+          <View style={styles.scoreContainer}>
+            <Animated.View
+              style={[
+                styles.scoreBox,
+                { transform: [{ scale: scorePopAnim }] }
+              ]}
+            >
+              <Text style={styles.scoreLabel}>SCORE</Text>
+              <Text style={styles.scoreValue}>{score}</Text>
+            </Animated.View>
+            <View style={styles.scoreBox}>
+              <Text style={styles.scoreLabel}>BEST</Text>
+              <Text style={styles.scoreValue}>{bestScore}</Text>
+            </View>
+          </View>
 
-      {/* 陀螺仪控制区域 */}
-      <View style={styles.gyroControlContainer}>
-        <Text style={styles.gyroLabel}>Gyro Control</Text>
-        <TouchableOpacity
-          style={[styles.gyroButton, isGyroMode && styles.gyroButtonActive]}
-          onPress={() => setIsGyroMode(!isGyroMode)}
-          activeOpacity={0.8}
-        >
-          <Ionicons
-            name={isGyroMode ? "hardware-chip" : "hardware-chip-outline"}
-            size={32}
-            color={isGyroMode ? "#FFFFFF" : COLORS.gray}
-          />
-        </TouchableOpacity>
-      </View>
+          {/* 按钮区域 */}
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity
+              style={styles.gameButton}
+              onPress={startNewGame}
+              disabled={isMoving}
+            >
+              <Text style={styles.buttonText}>New Game</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.gameButton}
+              onPress={undo}
+              disabled={isMoving}
+            >
+              <Text style={styles.buttonText}>Undo</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* 游戏网格 - 添加手势识别 */}
+          <View
+            style={styles.gridWrapper}
+            onTouchStart={onTouchStart}
+            onTouchEnd={onTouchEnd}
+          >
+            <GameGrid grid={grid} />
+          </View>
+
+          {/* 左下角帮助按钮 */}
+          <View style={styles.helpButtonContainer}>
+            <Text style={styles.gyroLabel}>Help</Text>
+            <TouchableOpacity
+              style={styles.helpButton}
+              onPress={() => setIsHelpModalVisible(true)}
+              activeOpacity={0.8}
+            >
+              <Ionicons name="help" size={32} color={COLORS.gray} />
+            </TouchableOpacity>
+          </View>
+
+          {/* 陀螺仪控制区域 */}
+          <View style={styles.gyroControlContainer}>
+            <Text style={styles.gyroLabel}>Tilt Control</Text>
+            <TouchableOpacity
+              style={[styles.gyroButton, isGyroMode && styles.gyroButtonActive]}
+              onPress={() => setIsGyroMode(!isGyroMode)}
+              activeOpacity={0.8}
+            >
+              <Ionicons
+                name={isGyroMode ? "hardware-chip" : "hardware-chip-outline"}
+                size={32}
+                color={isGyroMode ? "#FFFFFF" : COLORS.gray}
+              />
+            </TouchableOpacity>
+          </View>
+        </>
+      )}
 
       {/* 帮助弹窗 */}
       <Modal
@@ -674,7 +776,98 @@ export const GameScreen: React.FC<GameScreenProps> = ({ onBack, initialGameState
     borderColor: '#E0E0E0',
   },
 
-  // Modal
+  // 横屏模式样式
+  landscapeContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    paddingVertical: 10,
+  },
+  landscapeLeftColumn: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingRight: 10,
+  },
+  landscapeCenterColumn: {
+    flex: 2,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  landscapeRightColumn: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingLeft: 10,
+    gap: 16,
+  },
+  backButtonLandscape: {
+    marginBottom: 20,
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  titleLandscape: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#776E65',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  scoreContainerLandscape: {
+    alignItems: 'center',
+    gap: 10,
+  },
+  gridWrapperLandscape: {
+    transform: [{ scale: 0.8 }], // 稍微缩小网格以适应横屏高度
+  },
+  gameButtonLandscape: {
+    backgroundColor: '#8F7A66',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+    width: '80%',
+    alignItems: 'center',
+  },
+  landscapeControlButtons: {
+    flexDirection: 'row',
+    gap: 16,
+    marginTop: 20,
+  },
+  controlButtonWrapper: {
+    alignItems: 'center',
+  },
+  helpButtonLandscape: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 5,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+  },
+  gyroButtonLandscape: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 5,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+  },
+  // Modal 样式
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',

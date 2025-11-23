@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS } from '../constants/colors';
 import { MenuButton } from '../components/MenuButton';
@@ -87,10 +87,13 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     onNavigateToProfile();
   };
 
+  const { width, height } = useWindowDimensions();
+  const isLandscape = width > height;
+
   return (
     <SafeAreaView style={styles.container} edges={['top', 'right', 'bottom', 'left']}>
-      {/* 顶部图标区域 */}
-      <View style={styles.topIconsContainer}>
+      {/* 顶部图标区域 - 横屏时绝对定位 */}
+      <View style={isLandscape ? styles.topIconsContainerLandscape : styles.topIconsContainer}>
         {/* 右上角 - 用户图标 */}
         <TouchableOpacity
           onPress={handleUserIcon}
@@ -100,45 +103,91 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         </TouchableOpacity>
       </View>
 
-      {/* 标题区域 */}
-      <View style={styles.titleContainer}>
-        <View style={styles.tiltLeft}
-        >
-          <Text style={styles.title2048}>2048</Text>
-        </View>
-        <View style={styles.tiltRight}
-        >
-          <Text style={styles.titleTilt}>Tilt</Text>
-        </View>
-      </View>
+      {isLandscape ? (
+        <View style={styles.landscapeContent}>
+          {/* 左侧：标题 */}
+          <View style={styles.landscapeLeft}>
+            <View style={styles.titleContainerLandscape}>
+              <View style={styles.tiltLeft}>
+                <Text style={styles.title2048}>2048</Text>
+              </View>
+              <View style={styles.tiltRight}>
+                <Text style={styles.titleTilt}>Tilt</Text>
+              </View>
+            </View>
+          </View>
 
-      {/* 菜单按钮区域 */}
-      <View style={styles.menuContainer}>
-        <MenuButton
-          title="New Game"
-          onPress={handleNewGame}
-          backgroundColor="#EDC22E"
-          textColor="#F9F6F2"
-        />
-        <MenuButton
-          title="Resume"
-          onPress={handleResume}
-          backgroundColor="#EDC850"
-          textColor="#F9F6F2"
-        />
-        <MenuButton
-          title="Rank"
-          onPress={handleRank}
-          backgroundColor="#F59563"
-          textColor="#F9F6F2"
-        />
-        <MenuButton
-          title="About"
-          onPress={handleAbout}
-          backgroundColor="#F2B179"
-          textColor="#F9F6F2"
-        />
-      </View>
+          {/* 右侧：菜单 */}
+          <View style={styles.landscapeRight}>
+            <View style={styles.menuContainer}>
+              <MenuButton
+                title="New Game"
+                onPress={handleNewGame}
+                backgroundColor="#EDC22E"
+                textColor="#F9F6F2"
+              />
+              <MenuButton
+                title="Resume"
+                onPress={handleResume}
+                backgroundColor="#EDC850"
+                textColor="#F9F6F2"
+              />
+              <MenuButton
+                title="Rank"
+                onPress={handleRank}
+                backgroundColor="#F59563"
+                textColor="#F9F6F2"
+              />
+              <MenuButton
+                title="About"
+                onPress={handleAbout}
+                backgroundColor="#F2B179"
+                textColor="#F9F6F2"
+              />
+            </View>
+          </View>
+        </View>
+      ) : (
+        <>
+          {/* 标题区域 */}
+          <View style={styles.titleContainer}>
+            <View style={styles.tiltLeft}>
+              <Text style={styles.title2048}>2048</Text>
+            </View>
+            <View style={styles.tiltRight}>
+              <Text style={styles.titleTilt}>Tilt</Text>
+            </View>
+          </View>
+
+          {/* 菜单按钮区域 */}
+          <View style={styles.menuContainer}>
+            <MenuButton
+              title="New Game"
+              onPress={handleNewGame}
+              backgroundColor="#EDC22E"
+              textColor="#F9F6F2"
+            />
+            <MenuButton
+              title="Resume"
+              onPress={handleResume}
+              backgroundColor="#EDC850"
+              textColor="#F9F6F2"
+            />
+            <MenuButton
+              title="Rank"
+              onPress={handleRank}
+              backgroundColor="#F59563"
+              textColor="#F9F6F2"
+            />
+            <MenuButton
+              title="About"
+              onPress={handleAbout}
+              backgroundColor="#F2B179"
+              textColor="#F9F6F2"
+            />
+          </View>
+        </>
+      )}
 
       {/* Version */}
       <View style={styles.versionContainer}>
@@ -161,6 +210,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 20,
   },
+  topIconsContainerLandscape: {
+    position: 'absolute',
+    top: 20,
+    right: 20,
+    zIndex: 10,
+  },
   iconButton: {
     width: 40,
     height: 40,
@@ -173,6 +228,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 60,
     marginBottom: 40,
+  },
+  titleContainerLandscape: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 
   tiltLeft: {
@@ -198,6 +257,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     flex: 1,
+  },
+
+  // 横屏布局样式
+  landscapeContent: {
+    flex: 1,
+    flexDirection: 'row',
+  },
+  landscapeLeft: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  landscapeRight: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 
   // 版本号区域样式
