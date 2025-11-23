@@ -26,7 +26,7 @@ export const saveCurrentUser = async (username: string): Promise<void> => {
   try {
     await AsyncStorage.setItem(CURRENT_USER_KEY, username);
   } catch (error) {
-    console.error('保存当前用户失败:', error);
+    console.error('Failed to save the current user:', error);
   }
 };
 
@@ -37,7 +37,7 @@ export const getCurrentUser = async (): Promise<string | null> => {
   try {
     return await AsyncStorage.getItem(CURRENT_USER_KEY);
   } catch (error) {
-    console.error('获取当前用户失败:', error);
+    console.error('Failed to retrieve current user:', error);
     return null;
   }
 };
@@ -49,7 +49,7 @@ export const clearCurrentUser = async (): Promise<void> => {
   try {
     await AsyncStorage.removeItem(CURRENT_USER_KEY);
   } catch (error) {
-    console.error('清除当前用户失败:', error);
+    console.error('Failed to delete the current user:', error);
   }
 };
 
@@ -66,9 +66,9 @@ export const saveGameState = async (
     const key = `${GAME_STATE_PREFIX}${username}`;
     const data = JSON.stringify(gameState);
     await AsyncStorage.setItem(key, data);
-    console.log(`游戏状态已保存 [${username}]`);
+    console.log(`Game state saved [${username}]`);
   } catch (error) {
-    console.error('保存游戏状态失败:', error);
+    console.error('Failed to save game state:', error);
   }
 };
 
@@ -85,15 +85,15 @@ export const loadGameState = async (
     const data = await AsyncStorage.getItem(key);
 
     if (!data) {
-      console.log(`没有找到 [${username}] 的游戏状态`);
+      console.log(`Cannot find [${username}] game status`);
       return null;
     }
 
     const gameState = JSON.parse(data) as SavedGameState;
-    console.log(`加载游戏状态成功 [${username}]`);
+    console.log(`Game state loaded successfully [${username}]`);
     return gameState;
   } catch (error) {
-    console.error('加载游戏状态失败:', error);
+    console.error('Failed to load game state:', error);
     return null;
   }
 };
@@ -106,9 +106,9 @@ export const clearGameState = async (username: string): Promise<void> => {
   try {
     const key = `${GAME_STATE_PREFIX}${username}`;
     await AsyncStorage.removeItem(key);
-    console.log(`游戏状态已清空 [${username}]`);
+    console.log(`Game state has been cleared [${username}]`);
   } catch (error) {
-    console.error('清空游戏状态失败:', error);
+    console.error('Failed to clear game state:', error);
   }
 };
 
@@ -122,7 +122,7 @@ export const hasUnfinishedGame = async (username: string): Promise<boolean> => {
     const gameState = await loadGameState(username);
     return gameState !== null;
   } catch (error) {
-    console.error('检查未完成游戏失败:', error);
+    console.error('Check failed for unfinished game:', error);
     return false;
   }
 };
@@ -140,7 +140,7 @@ export const saveBestScore = async (
     const key = `${BEST_SCORE_PREFIX}${username}`;
     await AsyncStorage.setItem(key, bestScore.toString());
   } catch (error) {
-    console.error('保存最高分失败:', error);
+    console.error('Failed to save the highest score:', error);
   }
 };
 
@@ -155,7 +155,7 @@ export const getBestScore = async (username: string): Promise<number> => {
     const data = await AsyncStorage.getItem(key);
     return data ? parseInt(data, 10) : 0;
   } catch (error) {
-    console.error('获取最高分失败:', error);
+    console.error('Failed to obtain the highest score:', error);
     return 0;
   }
 };

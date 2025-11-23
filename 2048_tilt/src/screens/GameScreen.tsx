@@ -215,13 +215,26 @@ export const GameScreen: React.FC<GameScreenProps> = ({ onBack, initialGameState
             // 更新 Supabase 中的最高分
             await updateBestScore(supabaseUser.id, newScore);
 
-            // 上传本次游戏分数
-            // TODO: 后续添加 GPS 位置信息
+            // 尝试获取位置信息（静默失败）
+            let location = undefined;
+            try {
+              const { getCurrentLocation } = await import('../services/locationService');
+              const result = await getCurrentLocation();
+              if (result.location && !result.error) {
+                location = result.location;
+                console.log(`位置信息: ${location.city}, ${location.country}`);
+              }
+            } catch (error) {
+              // 静默失败，不影响分数提交
+              console.log('未能获取位置信息，将不附带位置数据');
+            }
+
+            // 上传本次游戏分数（带位置信息）
             const { score: uploadedScore, error } = await uploadScore(
               supabaseUser.id,
               supabaseUser.username,
-              newScore
-              // location: { latitude, longitude, city, country }  // 后续添加
+              newScore,
+              location  // 如果有位置信息则上传
             );
 
             if (error) {

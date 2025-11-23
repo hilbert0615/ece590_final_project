@@ -41,7 +41,7 @@ export const signUp = async (
     });
 
     if (authError || !authData.user) {
-      return { error: authError?.message || '注册失败' };
+      return { error: authError?.message || 'Registration failed' };
     }
 
     // 某些项目开启了“邮箱确认”，此时 signUp 不会返回 session。
@@ -157,7 +157,7 @@ export const signOut = async (): Promise<{ error?: string }> => {
     const { error } = await supabase.auth.signOut();
 
     if (error) {
-      console.error('登出失败:', error);
+      console.error('Logout failed:', error);
       return { error: error.message };
     }
 

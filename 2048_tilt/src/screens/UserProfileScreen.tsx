@@ -71,17 +71,17 @@ export const UserProfileScreen: React.FC<UserProfileScreenProps> = ({
    */
   const handleLogout = () => {
     Alert.alert(
-      '确认登出',
-      '确定要登出吗？未完成的游戏将会保存。',
+      'Confirm logout',
+      'Are you sure you want to log out? Unfinished games will be saved.',
       [
-        { text: '取消', style: 'cancel' },
+        { text: 'Cancel', style: 'cancel' },
         {
-          text: '登出',
+          text: 'Logout',
           style: 'destructive',
           onPress: async () => {
             const { error } = await signOut();
             if (error) {
-              Alert.alert('登出失败', error);
+              Alert.alert('Logout failed', error);
               return;
             }
             onLogout();
@@ -96,19 +96,19 @@ export const UserProfileScreen: React.FC<UserProfileScreenProps> = ({
    */
   const handleAvatarPress = () => {
     Alert.alert(
-      '更换头像',
-      '请选择图片来源',
+      'Change profile picture',
+      'Please select the image source.',
       [
         {
-          text: '从相册选择',
+          text: 'Select from photo album',
           onPress: () => handlePickAndUploadAvatar(false),
         },
         {
-          text: '拍照上传',
+          text: 'Take a photo and upload it',
           onPress: () => handlePickAndUploadAvatar(true),
         },
         {
-          text: '取消',
+          text: 'Cancel',
           style: 'cancel',
         },
       ]
@@ -126,13 +126,13 @@ export const UserProfileScreen: React.FC<UserProfileScreenProps> = ({
       if (fromCamera) {
         const { status } = await ImagePicker.requestCameraPermissionsAsync();
         if (status !== 'granted') {
-          Alert.alert('权限不足', '需要相机权限才能拍照上传头像');
+          Alert.alert('Insufficient permissions', 'Camera permission is required to take photos and upload your profile picture.');
           return;
         }
       } else {
         const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
         if (status !== 'granted') {
-          Alert.alert('权限不足', '需要相册权限才能选择头像');
+          Alert.alert('Insufficient permissions', 'Album access permission is required to select a profile picture.');
           return;
         }
       }
@@ -283,7 +283,7 @@ export const UserProfileScreen: React.FC<UserProfileScreenProps> = ({
           </TouchableOpacity>
 
           {isUploading && (
-            <Text style={styles.uploadingText}>上传中...</Text>
+            <Text style={styles.uploadingText}>Uploading...</Text>
           )}
 
           {/* 用户名 */}
@@ -298,7 +298,7 @@ export const UserProfileScreen: React.FC<UserProfileScreenProps> = ({
           <View style={styles.statsCard}>
             <Ionicons name="trophy" size={32} color={COLORS.orange} />
             <View style={styles.statsTextContainer}>
-              <Text style={styles.statsLabel}>最高分</Text>
+              <Text style={styles.statsLabel}>Highest Score</Text>
               <Text style={styles.statsValue}>{profile.best_score}</Text>
             </View>
           </View>
@@ -311,7 +311,7 @@ export const UserProfileScreen: React.FC<UserProfileScreenProps> = ({
             onPress={handleLogout}
           >
             <Ionicons name="log-out-outline" size={20} color="#FFFFFF" />
-            <Text style={styles.logoutButtonText}>登出</Text>
+            <Text style={styles.logoutButtonText}>Logout</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>

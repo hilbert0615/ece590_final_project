@@ -4,26 +4,25 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS } from '../constants/colors';
 import { MenuButton } from '../components/MenuButton';
 import { Ionicons } from '@expo/vector-icons';
-import {
-  getCurrentUser,
-  loadGameState,
-  SavedGameState,
-} from '../utils/storageUtils';
+import { getCurrentUser, loadGameState, SavedGameState, } from '../utils/storageUtils';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-/**
- * HomeScreen - 游戏主界面
- * 包含标题、菜单按钮和顶部图标
- */
 interface HomeScreenProps {
   onNavigateToGame: () => void;  // 导航到游戏界面的回调（新游戏）
   onResumeGame: (savedState: SavedGameState) => void;  // 导航到游戏界面的回调（Resume）
   onNavigateToProfile: () => void;  // 导航到用户资料界面的回调
+  onNavigateToAbout: () => void;  // 导航到关于界面的回调
+  onNavigateToRank: () => void;  // 导航到排行榜界面的回调
+  onNavigateToLogin: () => void; // 导航到登录界面的回调
 }
 
 export const HomeScreen: React.FC<HomeScreenProps> = ({
   onNavigateToGame,
   onResumeGame,
   onNavigateToProfile,
+  onNavigateToAbout,
+  onNavigateToRank,
+  onNavigateToLogin,
 }) => {
 
   // 按钮点击处理函数
@@ -56,38 +55,42 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     onResumeGame(savedState);
   };
 
-  const handleRank = () => {
+  const handleRank = async () => {
     console.log('Rank button pressed');
-    // TODO: 后续实现排行榜功能
+
+    // 1. 检查是否登录
+    const currentUser = await getCurrentUser();
+    const isGuest = await AsyncStorage.getItem('is_guest_mode');
+
+    if (!currentUser || currentUser === 'guest' || isGuest === 'true') {
+      Alert.alert(
+        'Login Required',
+        'Please log in to view rankings.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Go to Login', onPress: onNavigateToLogin },
+        ]
+      );
+      return;
+    }
+
+    onNavigateToRank();
   };
 
   const handleAbout = () => {
     console.log('About button pressed');
-    // TODO: 后续实现关于页面
-  };
-
-  const handleLocationIcon = () => {
-    console.log('The location icon was clicked');
-    // TODO: 后续实现位置权限请求
+    onNavigateToAbout();  // 跳转到关于界面
   };
 
   const handleUserIcon = () => {
     console.log('The user icon was clicked');
-    onNavigateToProfile();  // 回到用户资料界面
+    onNavigateToProfile();
   };
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'right', 'bottom', 'left']}>
       {/* 顶部图标区域 */}
       <View style={styles.topIconsContainer}>
-        {/* 左上角 - 位置图标 */}
-        <TouchableOpacity
-          onPress={handleLocationIcon}
-          style={styles.iconButton}
-        >
-          <Ionicons name="location" size={28} color={COLORS.gray} />
-        </TouchableOpacity>
-
         {/* 右上角 - 用户图标 */}
         <TouchableOpacity
           onPress={handleUserIcon}
@@ -111,13 +114,33 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 
       {/* 菜单按钮区域 */}
       <View style={styles.menuContainer}>
-        <MenuButton title="New Game" onPress={handleNewGame} />
-        <MenuButton title="Resume" onPress={handleResume} />
-        <MenuButton title="Rank" onPress={handleRank} />
-        <MenuButton title="About" onPress={handleAbout} />
+        <MenuButton
+          title="New Game"
+          onPress={handleNewGame}
+          backgroundColor="#EDC22E"
+          textColor="#F9F6F2"
+        />
+        <MenuButton
+          title="Resume"
+          onPress={handleResume}
+          backgroundColor="#EDC850"
+          textColor="#F9F6F2"
+        />
+        <MenuButton
+          title="Rank"
+          onPress={handleRank}
+          backgroundColor="#F59563"
+          textColor="#F9F6F2"
+        />
+        <MenuButton
+          title="About"
+          onPress={handleAbout}
+          backgroundColor="#F2B179"
+          textColor="#F9F6F2"
+        />
       </View>
 
-      {/* 底部版本号 */}
+      {/* Version */}
       <View style={styles.versionContainer}>
         <Text style={styles.versionText}>Version: 0.0.1</Text>
       </View>
@@ -134,7 +157,7 @@ const styles = StyleSheet.create({
   // 顶部图标样式
   topIconsContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-end',
     paddingHorizontal: 20,
     paddingTop: 20,
   },

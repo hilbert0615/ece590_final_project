@@ -5,6 +5,8 @@ import { HomeScreen } from './src/screens/HomeScreen';
 import { GameScreen } from './src/screens/GameScreen';
 import { LoginScreen } from './src/screens/LoginScreen';
 import { UserProfileScreen } from './src/screens/UserProfileScreen';
+import { AboutScreen } from './src/screens/AboutScreen';
+import { RankScreen } from './src/screens/RankScreen';
 import { SavedGameState } from './src/utils/storageUtils';
 import { getCurrentUser } from './src/services/authService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -13,10 +15,10 @@ import { COLORS } from './src/constants/colors';
 
 /**
  * App 主入口组件
- * 实现屏幕导航：登录 -> 主菜单 <-> 游戏界面 <-> 用户资料
+ * 实现屏幕导航：登录 -> 主菜单 <-> 游戏界面 <-> 用户资料 <-> 关于 <-> 排行榜
  */
 
-type ScreenType = 'login' | 'home' | 'game' | 'profile';
+type ScreenType = 'login' | 'home' | 'game' | 'profile' | 'about' | 'rank';
 
 export default function App() {
   // 当前显示的屏幕
@@ -38,7 +40,7 @@ export default function App() {
         if (user) {
           console.log('已登录用户:', user.username);
           // 确保清理访客标记
-          try { await AsyncStorage.removeItem('is_guest_mode'); } catch {}
+          try { await AsyncStorage.removeItem('is_guest_mode'); } catch { }
           setCurrentScreen('home');
         } else {
           // 检查是否使用访客模式
@@ -66,7 +68,7 @@ export default function App() {
    */
   const handleLoginSuccess = () => {
     // 登录成功后，确保清理访客标记
-    AsyncStorage.removeItem('is_guest_mode').catch(() => {});
+    AsyncStorage.removeItem('is_guest_mode').catch(() => { });
     setCurrentScreen('home');
   };
 
@@ -103,6 +105,20 @@ export default function App() {
   };
 
   /**
+   * 导航到关于界面
+   */
+  const handleNavigateToAbout = () => {
+    setCurrentScreen('about');
+  };
+
+  /**
+   * 导航到排行榜界面
+   */
+  const handleNavigateToRank = () => {
+    setCurrentScreen('rank');
+  };
+
+  /**
    * 登出处理
    */
   const handleLogout = async () => {
@@ -136,6 +152,9 @@ export default function App() {
           onNavigateToGame={handleNewGame}
           onResumeGame={handleResumeGame}
           onNavigateToProfile={handleNavigateToProfile}
+          onNavigateToAbout={handleNavigateToAbout}
+          onNavigateToRank={handleNavigateToRank}
+          onNavigateToLogin={() => setCurrentScreen('login')}
         />
       )}
 
@@ -151,6 +170,18 @@ export default function App() {
           onBack={() => setCurrentScreen('home')}
           onLogout={handleLogout}
           onNavigateToLogin={() => setCurrentScreen('login')}
+        />
+      )}
+
+      {currentScreen === 'about' && (
+        <AboutScreen
+          onBack={() => setCurrentScreen('home')}
+        />
+      )}
+
+      {currentScreen === 'rank' && (
+        <RankScreen
+          onBack={() => setCurrentScreen('home')}
         />
       )}
 
