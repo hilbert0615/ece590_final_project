@@ -13,6 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../constants/colors';
 import { GameScore } from '../services/supabase';
+import { useTheme } from '../contexts/ThemeContext';
 import { getGlobalLeaderboard, getCityLeaderboard } from '../services/scoreService';
 import { getCurrentLocation } from '../services/locationService';
 
@@ -27,6 +28,7 @@ interface RankScreenProps {
 type TabType = 'global' | 'city';
 
 export const RankScreen: React.FC<RankScreenProps> = ({ onBack }) => {
+  const { backgroundColor, textColor, isDarkMode } = useTheme();
   const [activeTab, setActiveTab] = useState<TabType>('global');
   const [leaderboard, setLeaderboard] = useState<GameScore[]>([]);
   const [loading, setLoading] = useState(true);
@@ -208,15 +210,15 @@ export const RankScreen: React.FC<RankScreenProps> = ({ onBack }) => {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'right', 'bottom', 'left']}>
+    <SafeAreaView style={[styles.container, { backgroundColor }]} edges={['top', 'right', 'bottom', 'left']}>
       {isLandscape ? (
         <View style={styles.landscapeContainer}>
           <View style={styles.landscapeLeftPanel}>
             <View style={styles.header}>
               <TouchableOpacity onPress={onBack} style={styles.backButton}>
-                <Ionicons name="arrow-back" size={28} color={COLORS.darkOrange} />
+                <Ionicons name="arrow-back" size={28} color={isDarkMode ? textColor : COLORS.darkOrange} />
               </TouchableOpacity>
-              <Text style={styles.headerTitle}>Leaderboard</Text>
+              <Text style={[styles.headerTitle, { color: isDarkMode ? textColor : COLORS.darkOrange }]}>Leaderboard</Text>
               <View style={styles.placeholder} />
             </View>
 
@@ -262,9 +264,9 @@ export const RankScreen: React.FC<RankScreenProps> = ({ onBack }) => {
           {/* 顶部导航栏 */}
           <View style={styles.header}>
             <TouchableOpacity onPress={onBack} style={styles.backButton}>
-              <Ionicons name="arrow-back" size={28} color={COLORS.darkOrange} />
+              <Ionicons name="arrow-back" size={28} color={isDarkMode ? textColor : COLORS.darkOrange} />
             </TouchableOpacity>
-            <Text style={styles.headerTitle}>Leaderboard</Text>
+            <Text style={[styles.headerTitle, { color: isDarkMode ? textColor : COLORS.darkOrange }]}>Leaderboard</Text>
             <View style={styles.placeholder} />
           </View>
 
@@ -312,7 +314,6 @@ export const RankScreen: React.FC<RankScreenProps> = ({ onBack }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.lightYellow,
   },
 
   // 头部样式
@@ -334,7 +335,6 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: COLORS.darkOrange,
   },
   placeholder: {
     width: 40,

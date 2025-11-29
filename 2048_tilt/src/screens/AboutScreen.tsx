@@ -3,23 +3,25 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, useWindowDimensio
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../constants/colors';
+import { useTheme } from '../contexts/ThemeContext';
 
 interface AboutScreenProps {
   onBack: () => void;
 }
 
 export const AboutScreen: React.FC<AboutScreenProps> = ({ onBack }) => {
+  const { backgroundColor, textColor, isDarkMode } = useTheme();
   const { width, height } = useWindowDimensions();
   const isLandscape = width > height;
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'right', 'bottom', 'left']}>
+    <SafeAreaView style={[styles.container, { backgroundColor }]} edges={['top', 'right', 'bottom', 'left']}>
       {/* Back button */}
       <View style={styles.header}>
         <TouchableOpacity onPress={onBack} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={28} color={COLORS.darkOrange} />
+          <Ionicons name="arrow-back" size={28} color={isDarkMode ? textColor : COLORS.darkOrange} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>About</Text>
+        <Text style={[styles.headerTitle, { color: isDarkMode ? textColor : COLORS.darkOrange }]}>About</Text>
         <View style={styles.placeholder} />
       </View>
 
@@ -27,20 +29,20 @@ export const AboutScreen: React.FC<AboutScreenProps> = ({ onBack }) => {
         <View style={isLandscape ? styles.landscapeContent : styles.portraitContent}>
           {/* Developers */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Developers</Text>
+            <Text style={[styles.sectionTitle, { color: isDarkMode ? textColor : '#000000' }]}>Developers</Text>
             <View style={styles.divider} />
-            <Text style={styles.developerName}>Hilbert Hu</Text>
-            <Text style={styles.developerName}>Dhruva Barua</Text>
+            <Text style={[styles.developerName, { color: isDarkMode ? textColor : '#000000' }]}>Hilbert Hu</Text>
+            <Text style={[styles.developerName, { color: isDarkMode ? textColor : '#000000' }]}>Dhruva Barua</Text>
           </View>
 
           {/* Disclaimer section */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Information</Text>
+            <Text style={[styles.sectionTitle, { color: isDarkMode ? textColor : '#000000' }]}>Information</Text>
             <View style={styles.divider} />
 
-            <Text style={styles.disclaimerTitle}>Game Disclaimer and Related Terms</Text>
-            <Text style={styles.disclaimerSubtitle}>I. Disclaimer</Text>
-            <Text style={styles.disclaimerText}>
+            <Text style={[styles.disclaimerTitle, { color: isDarkMode ? textColor : '#000000' }]}>Game Disclaimer and Related Terms</Text>
+            <Text style={[styles.disclaimerSubtitle, { color: isDarkMode ? textColor : '#000000' }]}>I. Disclaimer</Text>
+            <Text style={[styles.disclaimerText, { color: isDarkMode ? textColor : '#333333' }]}>
               This game disclaimer (hereinafter referred to as the "disclaimer") refers to a legal
               document used to clarify the limitations on the scope of liability of game developers,
               game publishers and game platforms. Regardless of the reason for the user to access
@@ -48,8 +50,8 @@ export const AboutScreen: React.FC<AboutScreenProps> = ({ onBack }) => {
               consciously abide by the relevant terms.
             </Text>
 
-            <Text style={styles.disclaimerSubtitle}>1. Game risks are borne by the user:</Text>
-            <Text style={styles.disclaimerText}>
+            <Text style={[styles.disclaimerSubtitle, { color: isDarkMode ? textColor : '#000000' }]}>1. Game risks are borne by the user:</Text>
+            <Text style={[styles.disclaimerText, { color: isDarkMode ? textColor : '#333333' }]}>
               Before using the game, the user should fully understand the risks and uncertainties
               that may exist in the game, including but not limited to the security of virtual items,
               game characters, game accounts, attacks, mistakes, fraud and other issues suffered in
@@ -57,8 +59,8 @@ export const AboutScreen: React.FC<AboutScreenProps> = ({ onBack }) => {
               the game developers, publishers and platforms are not responsible for this.
             </Text>
 
-            <Text style={styles.disclaimerSubtitle}>2. Security of virtual items and game accounts:</Text>
-            <Text style={styles.disclaimerText}>
+            <Text style={[styles.disclaimerSubtitle, { color: isDarkMode ? textColor : '#000000' }]}>2. Security of virtual items and game accounts:</Text>
+            <Text style={[styles.disclaimerText, { color: isDarkMode ? textColor : '#333333' }]}>
               Users shall maintain the security of their personal game accounts and virtual items
               by themselves, including but not limited to keeping the account and password confidential,
               and carefully trading virtual items. The game developer, publisher and platform shall
@@ -66,8 +68,8 @@ export const AboutScreen: React.FC<AboutScreenProps> = ({ onBack }) => {
               caused by the user's own reasons.
             </Text>
 
-            <Text style={styles.disclaimerSubtitle}>3. Advertisements and links in the game:</Text>
-            <Text style={styles.disclaimerText}>
+            <Text style={[styles.disclaimerSubtitle, { color: isDarkMode ? textColor : '#000000' }]}>3. Advertisements and links in the game:</Text>
+            <Text style={[styles.disclaimerText, { color: isDarkMode ? textColor : '#333333' }]}>
               There may be advertisements and links in the game, and users shall bear the risks
               brought by clicking on advertisements and links. Any information, products or services
               obtained by users through advertisements and links are personal choices of users, and
@@ -77,9 +79,9 @@ export const AboutScreen: React.FC<AboutScreenProps> = ({ onBack }) => {
 
           {/* Version info */}
           <View style={styles.versionSection}>
-            <Text style={styles.versionText}>2048 Tilt</Text>
-            <Text style={styles.versionText}>Version 0.0.1</Text>
-            <Text style={styles.versionText}>© 2025 All Rights Reserved</Text>
+            <Text style={[styles.versionText, { color: isDarkMode ? textColor : COLORS.gray }]}>2048 Tilt</Text>
+            <Text style={[styles.versionText, { color: isDarkMode ? textColor : COLORS.gray }]}>Version 0.0.1</Text>
+            <Text style={[styles.versionText, { color: isDarkMode ? textColor : COLORS.gray }]}>© 2025 All Rights Reserved</Text>
           </View>
         </View>
       </ScrollView>
@@ -90,7 +92,6 @@ export const AboutScreen: React.FC<AboutScreenProps> = ({ onBack }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.lightYellow,
   },
 
   // 头部样式
@@ -112,7 +113,6 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: COLORS.darkOrange,
   },
   placeholder: {
     width: 40,
@@ -150,7 +150,6 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#000000',
     marginBottom: 10,
     textAlign: 'center',
   },
@@ -164,7 +163,6 @@ const styles = StyleSheet.create({
   developerName: {
     fontSize: 22,
     fontWeight: '600',
-    color: '#000000',
     marginVertical: 8,
     textAlign: 'center',
   },
@@ -173,19 +171,16 @@ const styles = StyleSheet.create({
   disclaimerTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#000000',
     marginBottom: 12,
   },
   disclaimerSubtitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#000000',
     marginTop: 16,
     marginBottom: 8,
   },
   disclaimerText: {
     fontSize: 14,
-    color: '#333333',
     lineHeight: 20,
     textAlign: 'justify',
   },
@@ -198,7 +193,6 @@ const styles = StyleSheet.create({
   },
   versionText: {
     fontSize: 14,
-    color: COLORS.gray,
     marginVertical: 2,
   },
 });

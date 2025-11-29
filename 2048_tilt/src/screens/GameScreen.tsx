@@ -18,6 +18,7 @@ import { Accelerometer } from 'expo-sensors';
 import { GameGrid } from '../components/GameGrid';
 import { COLORS } from '../constants/colors';
 import { Grid, Direction, GameHistory } from '../types/game';
+import { useTheme } from '../contexts/ThemeContext';
 import {
   initializeGrid,
   move,
@@ -47,6 +48,8 @@ interface GameScreenProps {
 }
 
 export const GameScreen: React.FC<GameScreenProps> = ({ onBack, initialGameState }) => {
+  const { backgroundColor, textColor, isDarkMode } = useTheme();
+  
   // 游戏状态（如果有初始状态则使用，否则新建游戏）
   const [grid, setGrid] = useState<Grid>(
     initialGameState?.grid || initializeGrid()
@@ -389,7 +392,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ onBack, initialGameState
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'left', 'right', 'bottom']}>
+    <SafeAreaView style={[styles.container, { backgroundColor }]} edges={['top', 'left', 'right', 'bottom']}>
       {isLandscape ? (
         <View style={styles.landscapeContainer}>
           {/* Left Column: Title, Back, Score */}
@@ -405,10 +408,10 @@ export const GameScreen: React.FC<GameScreenProps> = ({ onBack, initialGameState
               }}
               style={styles.backButtonLandscape}
             >
-              <Ionicons name="arrow-back" size={28} color={COLORS.gray} />
+              <Ionicons name="arrow-back" size={28} color={isDarkMode ? textColor : COLORS.gray} />
             </TouchableOpacity>
 
-            <Text style={styles.titleLandscape}>2048 Tilt</Text>
+            <Text style={[styles.titleLandscape, { color: isDarkMode ? textColor : '#776E65' }]}>2048 Tilt</Text>
 
             <View style={styles.scoreContainerLandscape}>
               <Animated.View
@@ -457,18 +460,18 @@ export const GameScreen: React.FC<GameScreenProps> = ({ onBack, initialGameState
 
             <View style={styles.landscapeControlButtons}>
               <View style={styles.controlButtonWrapper}>
-                <Text style={styles.gyroLabel}>Help</Text>
+                <Text style={[styles.gyroLabel, { color: isDarkMode ? textColor : COLORS.gray }]}>Help</Text>
                 <TouchableOpacity
                   style={styles.helpButtonLandscape}
                   onPress={() => setIsHelpModalVisible(true)}
                   activeOpacity={0.8}
                 >
-                  <Ionicons name="help" size={32} color={COLORS.gray} />
+                  <Ionicons name="help" size={32} color={isDarkMode ? textColor : COLORS.gray} />
                 </TouchableOpacity>
               </View>
 
               <View style={styles.controlButtonWrapper}>
-                <Text style={styles.gyroLabel}>Tilt</Text>
+                <Text style={[styles.gyroLabel, { color: isDarkMode ? textColor : COLORS.gray }]}>Tilt</Text>
                 <TouchableOpacity
                   style={[styles.gyroButtonLandscape, isGyroMode && styles.gyroButtonActive]}
                   onPress={() => setIsGyroMode(!isGyroMode)}
@@ -477,7 +480,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ onBack, initialGameState
                   <Ionicons
                     name={isGyroMode ? "hardware-chip" : "hardware-chip-outline"}
                     size={32}
-                    color={isGyroMode ? "#FFFFFF" : COLORS.gray}
+                    color={isGyroMode ? "#FFFFFF" : (isDarkMode ? textColor : COLORS.gray)}
                   />
                 </TouchableOpacity>
               </View>
@@ -501,11 +504,11 @@ export const GameScreen: React.FC<GameScreenProps> = ({ onBack, initialGameState
               }}
               style={styles.backButton}
             >
-              <Ionicons name="arrow-back" size={28} color={COLORS.gray} />
+              <Ionicons name="arrow-back" size={28} color={isDarkMode ? textColor : COLORS.gray} />
             </TouchableOpacity>
 
             {/* 标题 */}
-            <Text style={styles.title}>2048 Tilt</Text>
+            <Text style={[styles.title, { color: isDarkMode ? textColor : '#776E65' }]}>2048 Tilt</Text>
 
             {/* 占位符（保持布局对称） */}
             <View style={styles.backButton} />
@@ -557,19 +560,19 @@ export const GameScreen: React.FC<GameScreenProps> = ({ onBack, initialGameState
 
           {/* 左下角帮助按钮 */}
           <View style={styles.helpButtonContainer}>
-            <Text style={styles.gyroLabel}>Help</Text>
+            <Text style={[styles.gyroLabel, { color: isDarkMode ? textColor : COLORS.gray }]}>Help</Text>
             <TouchableOpacity
               style={styles.helpButton}
               onPress={() => setIsHelpModalVisible(true)}
               activeOpacity={0.8}
             >
-              <Ionicons name="help" size={32} color={COLORS.gray} />
+              <Ionicons name="help" size={32} color={isDarkMode ? textColor : COLORS.gray} />
             </TouchableOpacity>
           </View>
 
           {/* 陀螺仪控制区域 */}
           <View style={styles.gyroControlContainer}>
-            <Text style={styles.gyroLabel}>Tilt Control</Text>
+            <Text style={[styles.gyroLabel, { color: isDarkMode ? textColor : COLORS.gray }]}>Tilt Control</Text>
             <TouchableOpacity
               style={[styles.gyroButton, isGyroMode && styles.gyroButtonActive]}
               onPress={() => setIsGyroMode(!isGyroMode)}
@@ -578,7 +581,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ onBack, initialGameState
               <Ionicons
                 name={isGyroMode ? "hardware-chip" : "hardware-chip-outline"}
                 size={32}
-                color={isGyroMode ? "#FFFFFF" : COLORS.gray}
+                color={isGyroMode ? "#FFFFFF" : (isDarkMode ? textColor : COLORS.gray)}
               />
             </TouchableOpacity>
           </View>
@@ -600,7 +603,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ onBack, initialGameState
                 onPress={() => setIsHelpModalVisible(false)}
                 style={styles.closeButton}
               >
-                <Ionicons name="close" size={24} color={COLORS.gray} />
+                <Ionicons name="close" size={24} color={isDarkMode ? textColor : COLORS.gray} />
               </TouchableOpacity>
             </View>
 
@@ -638,7 +641,6 @@ export const GameScreen: React.FC<GameScreenProps> = ({ onBack, initialGameState
 }; const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.lightYellow,
     paddingHorizontal: 16,
   },
 
@@ -658,7 +660,6 @@ export const GameScreen: React.FC<GameScreenProps> = ({ onBack, initialGameState
   title: {
     fontSize: 36,
     fontWeight: 'bold',
-    color: '#776E65',
   },
 
   // 分数区域样式
@@ -725,7 +726,6 @@ export const GameScreen: React.FC<GameScreenProps> = ({ onBack, initialGameState
   },
   gyroLabel: {
     fontSize: 12,
-    color: COLORS.gray,
     marginBottom: 8,
     fontWeight: '600',
     textShadowColor: 'rgba(255, 255, 255, 0.5)',
@@ -810,7 +810,6 @@ export const GameScreen: React.FC<GameScreenProps> = ({ onBack, initialGameState
   titleLandscape: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#776E65',
     marginBottom: 20,
     textAlign: 'center',
   },

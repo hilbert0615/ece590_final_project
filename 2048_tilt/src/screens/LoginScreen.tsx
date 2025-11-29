@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../constants/colors';
 import { signIn, signUp } from '../services/authService';
+import { useTheme } from '../contexts/ThemeContext';
 
 /**
  * LoginScreen - 登录/注册界面
@@ -18,6 +19,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
   onLoginSuccess,
   onGuestMode,
 }) => {
+  const { backgroundColor, textColor, isDarkMode } = useTheme();
   const [isRegisterMode, setIsRegisterMode] = useState(false);  // 是否为注册模式
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -101,7 +103,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'right', 'bottom', 'left']}>
+    <SafeAreaView style={[styles.container, { backgroundColor }]} edges={['top', 'right', 'bottom', 'left']}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardView}
@@ -115,16 +117,16 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
             <View style={[styles.titleContainer, isLandscape && styles.titleContainerLandscape]}>
               {/* 使用包裹容器来做旋转，避免 Text 初次渲染偶发不生效 */}
               <View style={styles.tiltLeft}>
-                <Text style={styles.title2048}>2048</Text>
+                <Text style={[styles.title2048, { color: isDarkMode ? textColor : COLORS.darkOrange }]}>2048</Text>
               </View>
               <View style={styles.tiltRight}>
-                <Text style={styles.titleTilt}>Tilt</Text>
+                <Text style={[styles.titleTilt, { color: isDarkMode ? textColor : COLORS.orange }]}>Tilt</Text>
               </View>
             </View>
 
             {/* 表单 */}
             <View style={[styles.formContainer, isLandscape && styles.formContainerLandscape]}>
-              <Text style={styles.formTitle}>
+              <Text style={[styles.formTitle, { color: isDarkMode ? textColor : '#776E65' }]}>
                 {isRegisterMode ? 'Create account' : 'Login'}
               </Text>
 
@@ -228,7 +230,6 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.lightYellow,
   },
   keyboardView: {
     flex: 1,
@@ -271,13 +272,11 @@ const styles = StyleSheet.create({
   title2048: {
     fontSize: 72,
     fontWeight: 'bold',
-    color: COLORS.darkOrange,
     marginBottom: 10,
   },
   titleTilt: {
     fontSize: 66,
     fontWeight: 'bold',
-    color: COLORS.orange,
   },
 
   // 表单样式
@@ -291,7 +290,6 @@ const styles = StyleSheet.create({
   formTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#776E65',
     marginBottom: 24,
     textAlign: 'center',
   },

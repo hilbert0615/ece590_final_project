@@ -12,6 +12,7 @@ import { getCurrentUser } from './src/services/authService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ActivityIndicator, View, StyleSheet } from 'react-native';
 import { COLORS } from './src/constants/colors';
+import { ThemeProvider, useTheme } from './src/contexts/ThemeContext';
 
 /**
  * App 主入口组件
@@ -19,6 +20,15 @@ import { COLORS } from './src/constants/colors';
  */
 
 type ScreenType = 'login' | 'home' | 'game' | 'profile' | 'about' | 'rank';
+
+const LoadingScreen = () => {
+  const { backgroundColor } = useTheme();
+  return (
+    <View style={[styles.loadingContainer, { backgroundColor }]}>
+      <ActivityIndicator size="large" color={COLORS.orange} />
+    </View>
+  );
+};
 
 export default function App() {
   // 当前显示的屏幕
@@ -129,65 +139,67 @@ export default function App() {
   // 显示加载界面
   if (isCheckingAuth) {
     return (
-      <SafeAreaProvider>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={COLORS.orange} />
-        </View>
-        <StatusBar style="dark" />
-      </SafeAreaProvider>
+      <ThemeProvider>
+        <SafeAreaProvider>
+          <LoadingScreen />
+          <StatusBar style="dark" />
+        </SafeAreaProvider>
+      </ThemeProvider>
     );
   }
 
   return (
-    <SafeAreaProvider>
-      {currentScreen === 'login' && (
-        <LoginScreen
-          onLoginSuccess={handleLoginSuccess}
-          onGuestMode={handleGuestMode}
-        />
-      )}
+    <ThemeProvider>
+      <SafeAreaProvider>
+        {currentScreen === 'login' && (
+          <LoginScreen
+            onLoginSuccess={handleLoginSuccess}
+            onGuestMode={handleGuestMode}
+          />
+        )}
 
-      {currentScreen === 'home' && (
-        <HomeScreen
-          onNavigateToGame={handleNewGame}
-          onResumeGame={handleResumeGame}
-          onNavigateToProfile={handleNavigateToProfile}
-          onNavigateToAbout={handleNavigateToAbout}
-          onNavigateToRank={handleNavigateToRank}
-          onNavigateToLogin={() => setCurrentScreen('login')}
-        />
-      )}
+        {currentScreen === 'home' && (
+          <HomeScreen
+            onNavigateToGame={handleNewGame}
+            onResumeGame={handleResumeGame}
+            onNavigateToProfile={handleNavigateToProfile}
+            onNavigateToAbout={handleNavigateToAbout}
+            onNavigateToRank={handleNavigateToRank}
+            onNavigateToLogin={() => setCurrentScreen('login')}
+          />
+        )}
 
-      {currentScreen === 'game' && (
-        <GameScreen
-          onBack={() => setCurrentScreen('home')}
-          initialGameState={initialGameState}
-        />
-      )}
+        {currentScreen === 'game' && (
+          <GameScreen
+            onBack={() => setCurrentScreen('home')}
+            initialGameState={initialGameState}
+          />
+        )}
 
-      {currentScreen === 'profile' && (
-        <UserProfileScreen
-          onBack={() => setCurrentScreen('home')}
-          onLogout={handleLogout}
-          onNavigateToLogin={() => setCurrentScreen('login')}
-        />
-      )}
+        {currentScreen === 'profile' && (
+          <UserProfileScreen
+            onBack={() => setCurrentScreen('home')}
+            onLogout={handleLogout}
+            onNavigateToLogin={() => setCurrentScreen('login')}
+          />
+        )}
 
-      {currentScreen === 'about' && (
-        <AboutScreen
-          onBack={() => setCurrentScreen('home')}
-        />
-      )}
+        {currentScreen === 'about' && (
+          <AboutScreen
+            onBack={() => setCurrentScreen('home')}
+          />
+        )}
 
-      {currentScreen === 'rank' && (
-        <RankScreen
-          onBack={() => setCurrentScreen('home')}
-        />
-      )}
+        {currentScreen === 'rank' && (
+          <RankScreen
+            onBack={() => setCurrentScreen('home')}
+          />
+        )}
 
-      {/* StatusBar 控制顶部状态栏样式 */}
-      <StatusBar style="dark" />
-    </SafeAreaProvider>
+        {/* StatusBar 控制顶部状态栏样式 */}
+        <StatusBar style="dark" />
+      </SafeAreaProvider>
+    </ThemeProvider>
   );
 }
 
@@ -196,6 +208,5 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: COLORS.lightYellow,
   },
 });

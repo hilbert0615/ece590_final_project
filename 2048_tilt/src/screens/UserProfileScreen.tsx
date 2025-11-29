@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { COLORS } from '../constants/colors';
 import { getCurrentUserWithEmail, signOut, updateUserProfile } from '../services/authService';
+import { useTheme } from '../contexts/ThemeContext';
 import { getUserScoreHistory } from '../services/scoreService';
 import { UserProfile, GameScore } from '../services/supabase';
 import * as ImagePicker from 'expo-image-picker';
@@ -26,6 +27,7 @@ export const UserProfileScreen: React.FC<UserProfileScreenProps> = ({
   onLogout,
   onNavigateToLogin,
 }) => {
+  const { backgroundColor, textColor, isDarkMode } = useTheme();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [scoreHistory, setScoreHistory] = useState<GameScore[]>([]);
   const [email, setEmail] = useState<string>('');
@@ -175,7 +177,7 @@ export const UserProfileScreen: React.FC<UserProfileScreenProps> = ({
 
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+      <SafeAreaView style={[styles.container, { backgroundColor }]} edges={['top', 'left', 'right']}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={COLORS.orange} />
         </View>
@@ -186,25 +188,25 @@ export const UserProfileScreen: React.FC<UserProfileScreenProps> = ({
   // 访客模式界面
   if (isGuestMode) {
     return (
-      <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+      <SafeAreaView style={[styles.container, { backgroundColor }]} edges={['top', 'left', 'right']}>
         {/* 顶部栏 */}
         <View style={styles.header}>
           <TouchableOpacity onPress={onBack} style={styles.headerButton}>
-            <Ionicons name="arrow-back" size={28} color={COLORS.gray} />
+            <Ionicons name="arrow-back" size={28} color={isDarkMode ? textColor : COLORS.gray} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Guest Mode</Text>
+          <Text style={[styles.headerTitle, { color: isDarkMode ? textColor : '#776E65' }]}>Guest Mode</Text>
           <View style={styles.headerButton} />
         </View>
 
         <View style={styles.guestModeContainer}>
           {/* 访客图标 */}
           <View style={styles.guestIconContainer}>
-            <Ionicons name="person-circle-outline" size={100} color={COLORS.gray} />
+            <Ionicons name="person-circle-outline" size={100} color={isDarkMode ? textColor : COLORS.gray} />
           </View>
 
           {/* 提示文字 */}
-          <Text style={styles.guestTitle}>You are using Guest mode.</Text>
-          <Text style={styles.guestDescription}>
+          <Text style={[styles.guestTitle, { color: isDarkMode ? textColor : '#776E65' }]}>You are using Guest mode.</Text>
+          <Text style={[styles.guestDescription, { color: isDarkMode ? textColor : COLORS.gray }]}>
             After logging into your account, you can: {'\n'}
             • Save your game progress to the cloud{'\n'}
             • View the global leaderboard{'\n'}
@@ -234,7 +236,7 @@ export const UserProfileScreen: React.FC<UserProfileScreenProps> = ({
   // 无法加载用户资料
   if (!profile) {
     return (
-      <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+      <SafeAreaView style={[styles.container, { backgroundColor }]} edges={['top', 'left', 'right']}>
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>Unable to load user profile</Text>
           <TouchableOpacity style={styles.backButton} onPress={onBack}>
@@ -249,13 +251,13 @@ export const UserProfileScreen: React.FC<UserProfileScreenProps> = ({
   const isLandscape = width > height;
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'left', 'right', 'bottom']}>
+    <SafeAreaView style={[styles.container, { backgroundColor }]} edges={['top', 'left', 'right', 'bottom']}>
       {/* 顶部栏 */}
       <View style={styles.header}>
         <TouchableOpacity onPress={onBack} style={styles.headerButton}>
           <Ionicons name="arrow-back" size={28} color="#776E65" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>User Profile</Text>
+        <Text style={[styles.headerTitle, { color: isDarkMode ? textColor : '#776E65' }]}>User Profile</Text>
         <View style={styles.headerButton} />
       </View>
 
@@ -294,10 +296,10 @@ export const UserProfileScreen: React.FC<UserProfileScreenProps> = ({
                 )}
 
                 {/* 用户名 */}
-                <Text style={styles.username}>{profile.username}</Text>
+                <Text style={[styles.username, { color: isDarkMode ? textColor : '#776E65' }]}>{profile.username}</Text>
 
                 {/* 邮箱 */}
-                <Text style={styles.email}>{email || '-'}</Text>
+                <Text style={[styles.email, { color: isDarkMode ? textColor : COLORS.gray }]}>{email || '-'}</Text>
               </View>
             </View>
 
@@ -354,10 +356,10 @@ export const UserProfileScreen: React.FC<UserProfileScreenProps> = ({
               )}
 
               {/* 用户名 */}
-              <Text style={styles.username}>{profile.username}</Text>
+              <Text style={[styles.username, { color: isDarkMode ? textColor : '#776E65' }]}>{profile.username}</Text>
 
               {/* 邮箱 */}
-              <Text style={styles.email}>{email || '-'}</Text>
+              <Text style={[styles.email, { color: isDarkMode ? textColor : COLORS.gray }]}>{email || '-'}</Text>
             </View>
 
             {/* 最高分卡片 */}
@@ -391,7 +393,6 @@ export const UserProfileScreen: React.FC<UserProfileScreenProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.lightYellow,
   },
 
   // 顶部栏
@@ -412,7 +413,6 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#776E65',
   },
 
   // 内容区域
@@ -476,13 +476,11 @@ const styles = StyleSheet.create({
   username: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#776E65',
     marginTop: 16,
     marginBottom: 20,
   },
   email: {
     fontSize: 16,
-    color: COLORS.gray,
     marginBottom: 8,
   },
 
@@ -590,13 +588,11 @@ const styles = StyleSheet.create({
   guestTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#776E65',
     marginBottom: 16,
     textAlign: 'center',
   },
   guestDescription: {
     fontSize: 16,
-    color: COLORS.gray,
     lineHeight: 24,
     textAlign: 'center',
     marginBottom: 32,
