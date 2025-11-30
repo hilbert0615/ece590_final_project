@@ -34,6 +34,7 @@ export const UserProfileScreen: React.FC<UserProfileScreenProps> = ({
   const [isUploading, setIsUploading] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isGuestMode, setIsGuestMode] = useState(false);
+  const { width, height } = useWindowDimensions();
 
   /**
    * 加载用户资料和历史分数
@@ -247,7 +248,6 @@ export const UserProfileScreen: React.FC<UserProfileScreenProps> = ({
     );
   }
 
-  const { width, height } = useWindowDimensions();
   const isLandscape = width > height;
 
   return (

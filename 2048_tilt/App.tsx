@@ -48,7 +48,7 @@ export default function App() {
         const user = await getCurrentUser();
 
         if (user) {
-          console.log('已登录用户:', user.username);
+          console.log('Logged-in users:', user.username);
           // 确保清理访客标记
           try { await AsyncStorage.removeItem('is_guest_mode'); } catch { }
           setCurrentScreen('home');
@@ -56,14 +56,14 @@ export default function App() {
           // 检查是否使用访客模式
           const isGuest = await AsyncStorage.getItem('is_guest_mode');
           if (isGuest === 'true') {
-            console.log('访客模式');
+            console.log('Guest Mode');
             setCurrentScreen('home');
           } else {
             setCurrentScreen('login');
           }
         }
       } catch (error) {
-        console.error('检查登录状态失败:', error);
+        console.error('Failed to check login status:', error);
         setCurrentScreen('login');
       } finally {
         setIsCheckingAuth(false);
@@ -77,7 +77,6 @@ export default function App() {
    * 登录成功处理
    */
   const handleLoginSuccess = () => {
-    // 登录成功后，确保清理访客标记
     AsyncStorage.removeItem('is_guest_mode').catch(() => { });
     setCurrentScreen('home');
   };
