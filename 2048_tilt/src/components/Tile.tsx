@@ -3,9 +3,9 @@ import { Animated, Text, StyleSheet, Platform } from 'react-native';
 import { getTileStyle } from '../constants/tileColors';
 
 /**
- * Tile 组件 - 单个方块（带动画效果）
+ * Tile 组件
  * @param value - 方块的数值（0 表示空方块）
- * @param isNew - 是否是新生成的方块（用于播放出现动画）
+ * @param isNew - 是否是新生成的方块
  */
 interface TileProps {
   value: number;
@@ -15,19 +15,19 @@ interface TileProps {
 export const Tile: React.FC<TileProps> = ({ value, isNew = false }) => {
   const tileStyle = getTileStyle(value);
 
-  // 动画值：缩放效果
+  // 缩放效果
   const scaleAnim = useRef(new Animated.Value(1)).current;
-  // 动画值：透明度效果
+  // 透明度效果
   const opacityAnim = useRef(new Animated.Value(1)).current;
 
-  // 当方块是新生成的时候，播放出现动画
+  // 新生成方块播放出现动画
   useEffect(() => {
     if (isNew && value !== 0) {
       // 初始状态：缩小并透明
       scaleAnim.setValue(0);
       opacityAnim.setValue(0);
 
-      // 动画：放大并显示
+      // 放大并显示
       Animated.parallel([
         Animated.spring(scaleAnim, {
           toValue: 1,
@@ -44,7 +44,7 @@ export const Tile: React.FC<TileProps> = ({ value, isNew = false }) => {
     }
   }, [value, isNew]);
 
-  // 当方块值改变时（合并），播放弹跳动画
+  // 当方块合并，播放动画
   const prevValue = useRef(value);
   useEffect(() => {
     if (prevValue.current !== 0 && value !== prevValue.current && value !== 0) {
@@ -86,7 +86,7 @@ export const Tile: React.FC<TileProps> = ({ value, isNew = false }) => {
             {
               color: tileStyle.textColor,
               fontSize: tileStyle.fontSize,
-              // 仅在 Android 设置 lineHeight，避免 iOS 视觉偏上
+              // 仅在 Android 设置 lineHeight
               lineHeight: Platform.OS === 'android' ? Math.round(tileStyle.fontSize * 1.15) : undefined,
               // iOS 轻微下移 1px，抵消系统字体基线的偏上观感
               paddingTop: Platform.OS === 'ios' ? 1 : 0,
@@ -120,6 +120,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'center',      // 水平居中
     textAlignVertical: 'center',  // 垂直居中 (Android)
-    includeFontPadding: false,    // 移除 Android 字体内边距，确保真正居中
+    includeFontPadding: false,
   },
 });

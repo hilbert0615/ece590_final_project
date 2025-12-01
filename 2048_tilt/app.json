@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "2048_tilt",
+    "name": "2048 Tilt",
     "slug": "2048_tilt",
     "version": "1.0.0",
     "orientation": "default",
@@ -13,7 +13,12 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "We need your location to show you on the city leaderboard.",
+        "NSCameraUsageDescription": "We need access to your camera to take profile photos.",
+        "NSPhotoLibraryUsageDescription": "We need access to your photos to set profile pictures."
+      }
     },
     "android": {
       "adaptiveIcon": {

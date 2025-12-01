@@ -49,7 +49,7 @@ interface GameScreenProps {
 
 export const GameScreen: React.FC<GameScreenProps> = ({ onBack, initialGameState }) => {
   const { backgroundColor, textColor, isDarkMode } = useTheme();
-  
+
   // 游戏状态（如果有初始状态则使用，否则新建游戏）
   const [grid, setGrid] = useState<Grid>(
     initialGameState?.grid || initializeGrid()
@@ -59,33 +59,32 @@ export const GameScreen: React.FC<GameScreenProps> = ({ onBack, initialGameState
   const [history, setHistory] = useState<GameHistory | null>(null);
   const [hasWonGame, setHasWonGame] = useState<boolean>(false);
 
-  // 当前用户名（用于保存游戏状态）
+  // 当前用户名
   const [currentUsername, setCurrentUsername] = useState<string>('guest');
 
-  // 陀螺仪模式状态
+  // 陀螺仪模式
   const [isGyroMode, setIsGyroMode] = useState<boolean>(false);
   const subscriptionRef = useRef<any>(null);
   const canMoveRef = useRef(true);
-  // 使用 useRef 延迟绑定 handleMove，避免声明顺序问题
   const handleMoveRef = useRef<((direction: Direction) => void) | null>(null);
-  const lastMoveTimeRef = useRef<number>(0); // 记录上次移动时间
+  const lastMoveTimeRef = useRef<number>(0);
 
-  // 帮助弹窗状态
+  // Helper弹窗
   const [isHelpModalVisible, setIsHelpModalVisible] = useState(false);
 
-  // 手势识别相关状态
+  // 手势识别
   const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(null);
 
-  // 动画相关
+  // 动画
   const scorePopAnim = useRef(new Animated.Value(1)).current;
 
-  // 防抖：防止连续滑动
+  // 防抖
   const [isMoving, setIsMoving] = useState<boolean>(false);
 
   const { width, height } = useWindowDimensions();
   const isLandscape = width > height;
 
-  // 初始化：获取当前用户名
+  // 获取当前用户名
   useEffect(() => {
     const initUser = async () => {
       const username = await getCurrentUser();
@@ -94,7 +93,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ onBack, initialGameState
     initUser();
   }, []);
 
-  // 自动保存游戏状态（每次 grid 或 score 变化时）
+  // 自动保存游戏状态
   useEffect(() => {
     const autoSave = async () => {
       if (currentUsername) {

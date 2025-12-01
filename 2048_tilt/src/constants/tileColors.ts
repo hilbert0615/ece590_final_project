@@ -9,7 +9,7 @@ export interface TileStyle {
   fontSize: number;
 }
 
-// 方块颜色映射表 - 基于经典 2048 游戏的配色方案
+// 方块颜色映射表
 export const TILE_COLORS: Record<number, TileStyle> = {
   0: {
     backgroundColor: '#CDC1B4',  // 空方块 - 浅棕色
