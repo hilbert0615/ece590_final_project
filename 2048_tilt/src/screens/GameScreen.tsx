@@ -509,8 +509,79 @@ export const GameScreen: React.FC<GameScreenProps> = ({ onBack, initialGameState
             {/* 标题 */}
             <Text style={[styles.title, { color: isDarkMode ? textColor : '#776E65' }]}>2048 Tilt</Text>
 
-            {/* 占位符（保持布局对称） */}
-            <View style={styles.backButton} />
+            {/* 测试按钮 - 强制结束游戏 */}
+            <TouchableOpacity
+              onPress={() => {
+                Alert.alert(
+                  'Force End Game',
+                  `Current Score: ${score}\n\nThis will end the game and upload your score to test the database.`,
+                  [
+                    { text: 'Cancel', style: 'cancel' },
+                    {
+                      text: 'End & Upload',
+                      style: 'destructive',
+                      onPress: async () => {
+                        // 保存最高分（本地）
+                        if (score > bestScore) {
+                          await saveBestScore(currentUsername, score);
+                          setBestScore(score);
+                        }
+
+                        // 清空游戏状态
+                        await clearGameState(currentUsername);
+
+                        // 上传分数到 Supabase（如果已登录）
+                        const supabaseUser = await getSupabaseUser();
+                        if (supabaseUser) {
+                          // 更新 Supabase 中的最高分
+                          await updateBestScore(supabaseUser.id, score);
+
+                          // 尝试获取位置信息
+                          let location = undefined;
+                          try {
+                            const { getCurrentLocation } = await import('../services/locationService');
+                            const result = await getCurrentLocation();
+                            if (result.location && !result.error) {
+                              location = result.location;
+                              console.log(`Location: ${location.city}, ${location.country}`);
+                            }
+                          } catch (error) {
+                            console.log('Unable to get location, will not attach location data');
+                          }
+
+                          // 上传分数
+                          const { score: uploadedScore, error } = await uploadScore(
+                            supabaseUser.id,
+                            supabaseUser.username,
+                            score,
+                            location
+                          );
+
+                          if (error) {
+                            Alert.alert('Upload Failed', error);
+                          } else {
+                            Alert.alert(
+                              'Success!',
+                              `Score uploaded: ${score}\nUsername: ${supabaseUser.username}\nLocation: ${location?.city || 'N/A'}\n\nCheck your database!`,
+                              [{ text: 'OK', onPress: () => startNewGame() }]
+                            );
+                          }
+                        } else {
+                          Alert.alert(
+                            'Guest Mode',
+                            'You are in guest mode. Scores are not uploaded to the database.\n\nPlease log in to test database functionality.',
+                            [{ text: 'OK', onPress: () => startNewGame() }]
+                          );
+                        }
+                      },
+                    },
+                  ]
+                );
+              }}
+              style={styles.backButton}
+            >
+              <Ionicons name="stop-circle" size={28} color="#DC6B6B" />
+            </TouchableOpacity>
           </View>
 
           {/* 分数显示区域 - 添加动画效果 */}
