@@ -9,7 +9,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTheme } from '../contexts/ThemeContext';
 
 interface HomeScreenProps {
-  onNavigateToGame: () => void;  // 导航到游戏界面的回调（新游戏）
+  onNavigateToGame: () => void;  // 导航到游戏界面的回调（new game）
   onResumeGame: (savedState: SavedGameState) => void;  // 导航到游戏界面的回调（Resume）
   onNavigateToProfile: () => void;  // 导航到用户资料界面的回调
   onNavigateToAbout: () => void;  // 导航到关于界面的回调

@@ -19,7 +19,6 @@ import { getCurrentLocation } from '../services/locationService';
 
 /**
  * RankScreen - 排行榜界面
- * 支持全球榜和城市榜切换
  */
 interface RankScreenProps {
   onBack: () => void;
@@ -54,11 +53,11 @@ export const RankScreen: React.FC<RankScreenProps> = ({ onBack }) => {
       const result = await getCurrentLocation();
       if (result.location?.city) {
         setUserCity(result.location.city);
-        console.log(`用户城市: ${result.location.city}`);
+        console.log(`User's city: ${result.location.city}`);
       }
     } catch (error) {
       // 静默失败，不影响全球榜
-      console.log('无法获取城市信息，将仅显示全球榜');
+      console.log('Unable to retrieve city information; only the global ranking will be displayed.');
     }
   };
 
@@ -92,7 +91,7 @@ export const RankScreen: React.FC<RankScreenProps> = ({ onBack }) => {
         }
       }
     } catch (error) {
-      console.error('加载排行榜失败:', error);
+      console.error('Failed to load the leaderboard:', error);
       setError('Failed to load leaderboard');
     } finally {
       setLoading(false);

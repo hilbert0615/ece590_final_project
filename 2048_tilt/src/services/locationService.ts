@@ -1,8 +1,5 @@
 /**
  * 位置服务 - 处理 GPS 定位和反向地理编码
- *
- * 注意：需要手动安装依赖
- * npx expo install expo-location
  */
 
 // 位置信息接口
@@ -22,19 +19,20 @@ export const getCurrentLocation = async (): Promise<{
   error?: string;
 }> => {
   try {
-    // 动态导入 expo-location（需要先安装）
     const Location = require('expo-location');
 
     // 1. 请求前台位置权限
     const { status } = await Location.requestForegroundPermissionsAsync();
 
     if (status !== 'granted') {
+      console.log('位置权限被拒绝');
       return { error: 'Location permission denied' };
     }
 
-    // 2. 获取当前位置
+    // 2. 获取当前位置（添加超时处理）
     const location = await Location.getCurrentPositionAsync({
       accuracy: Location.Accuracy.Balanced, // 平衡精度和速度
+      timeInterval: 5000, // 5秒超时
     });
 
     const { latitude, longitude } = location.coords;
@@ -52,14 +50,16 @@ export const getCurrentLocation = async (): Promise<{
       },
     };
   } catch (error: any) {
-    console.error('获取位置失败:', error);
+    // 静默处理位置错误，不影响主功能
+    console.log('Location services are unavailable (possibly due to using an emulator or weak GPS signal), and location information will not be included.');
 
     // 检查是否是模块未安装的错误
     if (error.message?.includes('Cannot find module')) {
       return { error: 'Please install expo-location package' };
     }
 
-    return { error: 'Failed to get location' };
+    // 其他位置错误（模拟器、信号弱等）返回友好提示
+    return { error: 'Location unavailable' };
   }
 };
 
@@ -89,7 +89,7 @@ export const reverseGeocode = async (
       const city = place.city || place.subregion || place.region;
       const country = place.country || place.isoCountryCode;
 
-      console.log(`反向地理编码结果: ${city}, ${country}`);
+      console.log(`Reverse geocoding results: ${city}, ${country}`);
 
       return {
         city: city || undefined,
@@ -99,7 +99,7 @@ export const reverseGeocode = async (
 
     return {};
   } catch (error) {
-    console.error('反向地理编码失败:', error);
+    console.error('Reverse geocoding failed:', error);
     return {};
   }
 };
@@ -114,7 +114,7 @@ export const checkLocationPermission = async (): Promise<boolean> => {
     const { status } = await Location.getForegroundPermissionsAsync();
     return status === 'granted';
   } catch (error) {
-    console.error('检查位置权限失败:', error);
+    console.error('Failed to check location permissions.:', error);
     return false;
   }
 };

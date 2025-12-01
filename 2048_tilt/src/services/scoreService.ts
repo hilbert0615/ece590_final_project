@@ -22,8 +22,21 @@ export const uploadScore = async (
     city?: string;
     country?: string;
   }
-): Promise<{ score?: GameScore; error?: string }> => {
+): Promise<{ score?: GameScore; error?: string; skipped?: boolean }> => {
   try {
+    // 检查用户最近一次上传的分数是否相同（避免重复上传）
+    const { data: recentScores } = await supabase
+      .from('game_scores')
+      .select('score')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(1);
+
+    if (recentScores && recentScores.length > 0 && recentScores[0].score === score) {
+      console.log(`跳过重复分数上传: ${username} - ${score}`);
+      return { skipped: true };
+    }
+
     const { data, error } = await supabase
       .from('game_scores')
       .insert({
@@ -52,7 +65,7 @@ export const uploadScore = async (
 };
 
 /**
- * 获取全球排行榜（前 100 名）
+ * 获取全球排行榜（前 100 名，每个用户只显示最高分）
  * @returns 排行榜数据
  */
 export const getGlobalLeaderboard = async (): Promise<{
@@ -60,18 +73,32 @@ export const getGlobalLeaderboard = async (): Promise<{
   error?: string;
 }> => {
   try {
+    // 获取所有分数，然后在客户端去重（因为 Supabase 的 DISTINCT ON 有限制）
     const { data, error } = await supabase
       .from('game_scores')
       .select('*')
-      .order('score', { ascending: false })
-      .limit(100);
+      .order('score', { ascending: false });
 
     if (error) {
       console.error('获取排行榜失败:', error);
       return { error: '获取排行榜失败' };
     }
 
-    return { leaderboard: data };
+    // 去重：每个用户只保留最高分
+    const userBestScores = new Map<string, GameScore>();
+    data?.forEach(score => {
+      const existing = userBestScores.get(score.user_id);
+      if (!existing || score.score > existing.score) {
+        userBestScores.set(score.user_id, score);
+      }
+    });
+
+    // 转为数组并按分数排序，取前100名
+    const leaderboard = Array.from(userBestScores.values())
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 100);
+
+    return { leaderboard };
   } catch (error) {
     console.error('获取排行榜错误:', error);
     return { error: '获取排行榜失败' };
@@ -79,7 +106,7 @@ export const getGlobalLeaderboard = async (): Promise<{
 };
 
 /**
- * 获取某个城市的排行榜（前 50 名）
+ * 获取某个城市的排行榜（前 50 名，每个用户只显示最高分）
  * @param city - 城市名称
  * @returns 排行榜数据
  */
@@ -94,15 +121,28 @@ export const getCityLeaderboard = async (
       .from('game_scores')
       .select('*')
       .eq('city', city)
-      .order('score', { ascending: false })
-      .limit(50);
+      .order('score', { ascending: false });
 
     if (error) {
       console.error('获取城市排行榜失败:', error);
       return { error: '获取城市排行榜失败' };
     }
 
-    return { leaderboard: data };
+    // 去重：每个用户只保留最高分
+    const userBestScores = new Map<string, GameScore>();
+    data?.forEach(score => {
+      const existing = userBestScores.get(score.user_id);
+      if (!existing || score.score > existing.score) {
+        userBestScores.set(score.user_id, score);
+      }
+    });
+
+    // 转为数组并按分数排序，取前50名
+    const leaderboard = Array.from(userBestScores.values())
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 50);
+
+    return { leaderboard };
   } catch (error) {
     console.error('获取城市排行榜错误:', error);
     return { error: '获取城市排行榜失败' };

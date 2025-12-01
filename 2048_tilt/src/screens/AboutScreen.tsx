@@ -14,6 +14,9 @@ export const AboutScreen: React.FC<AboutScreenProps> = ({ onBack }) => {
   const { width, height } = useWindowDimensions();
   const isLandscape = width > height;
 
+  const cardTextColor = isDarkMode ? '#1a1a1a' : '#000000';
+  const cardSubTextColor = isDarkMode ? '#0f0e0eff' : '#333333';
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor }]} edges={['top', 'right', 'bottom', 'left']}>
       {/* Back button */}
@@ -29,20 +32,20 @@ export const AboutScreen: React.FC<AboutScreenProps> = ({ onBack }) => {
         <View style={isLandscape ? styles.landscapeContent : styles.portraitContent}>
           {/* Developers */}
           <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: isDarkMode ? textColor : '#000000' }]}>Developers</Text>
+            <Text style={[styles.sectionTitle, { color: cardTextColor }]}>Developers</Text>
             <View style={styles.divider} />
-            <Text style={[styles.developerName, { color: isDarkMode ? textColor : '#000000' }]}>Hilbert Hu</Text>
-            <Text style={[styles.developerName, { color: isDarkMode ? textColor : '#000000' }]}>Dhruva Barua</Text>
+            <Text style={[styles.developerName, { color: cardTextColor }]}>Hilbert Hu</Text>
+            <Text style={[styles.developerName, { color: cardTextColor }]}>Dhruva Barua</Text>
           </View>
 
           {/* Disclaimer section */}
           <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: isDarkMode ? textColor : '#000000' }]}>Information</Text>
+            <Text style={[styles.sectionTitle, { color: cardTextColor }]}>Information</Text>
             <View style={styles.divider} />
 
-            <Text style={[styles.disclaimerTitle, { color: isDarkMode ? textColor : '#000000' }]}>Game Disclaimer and Related Terms</Text>
-            <Text style={[styles.disclaimerSubtitle, { color: isDarkMode ? textColor : '#000000' }]}>I. Disclaimer</Text>
-            <Text style={[styles.disclaimerText, { color: isDarkMode ? textColor : '#333333' }]}>
+            <Text style={[styles.disclaimerTitle, { color: cardTextColor }]}>Game Disclaimer and Related Terms</Text>
+            <Text style={[styles.disclaimerSubtitle, { color: cardTextColor }]}>I. Disclaimer</Text>
+            <Text style={[styles.disclaimerText, { color: cardSubTextColor }]}>
               This game disclaimer (hereinafter referred to as the "disclaimer") refers to a legal
               document used to clarify the limitations on the scope of liability of game developers,
               game publishers and game platforms. Regardless of the reason for the user to access
@@ -50,8 +53,8 @@ export const AboutScreen: React.FC<AboutScreenProps> = ({ onBack }) => {
               consciously abide by the relevant terms.
             </Text>
 
-            <Text style={[styles.disclaimerSubtitle, { color: isDarkMode ? textColor : '#000000' }]}>1. Game risks are borne by the user:</Text>
-            <Text style={[styles.disclaimerText, { color: isDarkMode ? textColor : '#333333' }]}>
+            <Text style={[styles.disclaimerSubtitle, { color: cardTextColor }]}>1. Game risks are borne by the user:</Text>
+            <Text style={[styles.disclaimerText, { color: cardSubTextColor }]}>
               Before using the game, the user should fully understand the risks and uncertainties
               that may exist in the game, including but not limited to the security of virtual items,
               game characters, game accounts, attacks, mistakes, fraud and other issues suffered in
@@ -59,8 +62,8 @@ export const AboutScreen: React.FC<AboutScreenProps> = ({ onBack }) => {
               the game developers, publishers and platforms are not responsible for this.
             </Text>
 
-            <Text style={[styles.disclaimerSubtitle, { color: isDarkMode ? textColor : '#000000' }]}>2. Security of virtual items and game accounts:</Text>
-            <Text style={[styles.disclaimerText, { color: isDarkMode ? textColor : '#333333' }]}>
+            <Text style={[styles.disclaimerSubtitle, { color: cardTextColor }]}>2. Security of virtual items and game accounts:</Text>
+            <Text style={[styles.disclaimerText, { color: cardSubTextColor }]}>
               Users shall maintain the security of their personal game accounts and virtual items
               by themselves, including but not limited to keeping the account and password confidential,
               and carefully trading virtual items. The game developer, publisher and platform shall
@@ -68,8 +71,8 @@ export const AboutScreen: React.FC<AboutScreenProps> = ({ onBack }) => {
               caused by the user's own reasons.
             </Text>
 
-            <Text style={[styles.disclaimerSubtitle, { color: isDarkMode ? textColor : '#000000' }]}>3. Advertisements and links in the game:</Text>
-            <Text style={[styles.disclaimerText, { color: isDarkMode ? textColor : '#333333' }]}>
+            <Text style={[styles.disclaimerSubtitle, { color: cardTextColor }]}>3. Advertisements and links in the game:</Text>
+            <Text style={[styles.disclaimerText, { color: cardSubTextColor }]}>
               There may be advertisements and links in the game, and users shall bear the risks
               brought by clicking on advertisements and links. Any information, products or services
               obtained by users through advertisements and links are personal choices of users, and

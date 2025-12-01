@@ -239,15 +239,15 @@ export const GameScreen: React.FC<GameScreenProps> = ({ onBack, initialGameState
               const result = await getCurrentLocation();
               if (result.location && !result.error) {
                 location = result.location;
-                console.log(`位置信息: ${location.city}, ${location.country}`);
+                console.log(`Location Information: ${location.city}, ${location.country}`);
               }
             } catch (error) {
               // 静默失败，不影响分数提交
-              console.log('未能获取位置信息，将不附带位置数据');
+              console.log('Unable to obtain location information; location data will not be included.');
             }
 
             // 上传本次游戏分数（带位置信息）
-            const { score: uploadedScore, error } = await uploadScore(
+            const { score: uploadedScore, error, skipped } = await uploadScore(
               supabaseUser.id,
               supabaseUser.username,
               newScore,
@@ -256,6 +256,8 @@ export const GameScreen: React.FC<GameScreenProps> = ({ onBack, initialGameState
 
             if (error) {
               console.error('Upload your score failed:', error);
+            } else if (skipped) {
+              console.log('Skipped duplicate score upload:', newScore);
             } else {
               console.log('Upload your score successful:', uploadedScore);
             }
@@ -493,7 +495,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ onBack, initialGameState
             {/* 返回按钮 */}
             <TouchableOpacity
               onPress={() => {
-                // 确保离开时关闭陀螺仪
+                // 离开时关闭陀螺仪
                 setIsGyroMode(false);
                 if (subscriptionRef.current) {
                   subscriptionRef.current.remove();
@@ -538,19 +540,26 @@ export const GameScreen: React.FC<GameScreenProps> = ({ onBack, initialGameState
 
                           // 尝试获取位置信息
                           let location = undefined;
+                          let locationStatus = 'Not available';
                           try {
                             const { getCurrentLocation } = await import('../services/locationService');
                             const result = await getCurrentLocation();
                             if (result.location && !result.error) {
                               location = result.location;
-                              console.log(`Location: ${location.city}, ${location.country}`);
+                              locationStatus = `${location.city || 'Unknown'}, ${location.country || 'Unknown'}`;
+                              console.log(`Location: ${locationStatus}`);
+                            } else if (result.error) {
+                              locationStatus = result.error === 'Location unavailable'
+                                ? 'GPS unavailable (emulator or weak signal)'
+                                : result.error;
                             }
                           } catch (error) {
                             console.log('Unable to get location, will not attach location data');
+                            locationStatus = 'Location service error';
                           }
 
                           // 上传分数
-                          const { score: uploadedScore, error } = await uploadScore(
+                          const { score: uploadedScore, error, skipped } = await uploadScore(
                             supabaseUser.id,
                             supabaseUser.username,
                             score,
@@ -559,10 +568,16 @@ export const GameScreen: React.FC<GameScreenProps> = ({ onBack, initialGameState
 
                           if (error) {
                             Alert.alert('Upload Failed', error);
+                          } else if (skipped) {
+                            Alert.alert(
+                              'Duplicate Score',
+                              `This score is the same as your last upload (${score}).\n\nSkipped to avoid duplicate records.`,
+                              [{ text: 'OK', onPress: () => startNewGame() }]
+                            );
                           } else {
                             Alert.alert(
-                              'Success!',
-                              `Score uploaded: ${score}\nUsername: ${supabaseUser.username}\nLocation: ${location?.city || 'N/A'}\n\nCheck your database!`,
+                              'Score Uploaded!',
+                              `Your score has been saved!\n\nScore: ${score}\nPlayer: ${supabaseUser.username}\nLocation: ${locationStatus}`,
                               [{ text: 'OK', onPress: () => startNewGame() }]
                             );
                           }

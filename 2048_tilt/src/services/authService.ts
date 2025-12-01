@@ -2,7 +2,7 @@ import { supabase, UserProfile } from './supabase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 /**
- * 认证服务 - 封装所有用户认证相关的操作
+ * 认证服务
  */
 
 /**

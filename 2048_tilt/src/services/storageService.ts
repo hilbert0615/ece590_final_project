@@ -11,7 +11,7 @@ export const uploadAvatar = async (
     // 使用 fetch 读取为 ArrayBuffer，避免在部分 RN 环境下 Response.blob 不可用的问题
     const res = await fetch(uri);
     if (!res.ok) {
-      return { error: `读取文件失败: ${res.status}` };
+      return { error: `Failed to read the file: ${res.status}` };
     }
     const arrayBuffer = await res.arrayBuffer();
     const fileBytes = new Uint8Array(arrayBuffer);
@@ -34,7 +34,7 @@ export const uploadAvatar = async (
       .upload(path, fileBytes, { contentType, upsert: true });
 
     if (uploadError) {
-      console.error('头像上传失败:', uploadError);
+      console.error('Profile picture upload failed:', uploadError);
       return { error: uploadError.message };
     }
 
@@ -43,12 +43,12 @@ export const uploadAvatar = async (
     const publicUrl = data.publicUrl;
     console.log('[uploadAvatar] uploaded path:', path, 'publicUrl:', publicUrl);
     if (!publicUrl) {
-      return { error: '获取头像公开地址失败' };
+      return { error: 'Failed to obtain the public address of the profile picture' };
     }
 
     return { publicUrl };
   } catch (e: any) {
-    console.error('上传头像异常:', e);
-    return { error: e?.message || '上传失败' };
+    console.error('Error uploading profile picture:', e);
+    return { error: e?.message || 'Upload failed' };
   }
 };

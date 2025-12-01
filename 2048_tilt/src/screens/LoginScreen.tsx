@@ -12,7 +12,7 @@ import { useTheme } from '../contexts/ThemeContext';
 
 interface LoginScreenProps {
   onLoginSuccess: () => void;  // 登录成功的回调
-  onGuestMode: () => void;      // 访客模式的回调
+  onGuestMode: () => void;     // 访客模式的回调
 }
 
 export const LoginScreen: React.FC<LoginScreenProps> = ({
